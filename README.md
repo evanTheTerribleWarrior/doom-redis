@@ -7,25 +7,14 @@ Play Doom with a live Web UI showing real-time game stats, leaderboards, and cha
 
 * * * * *
 
-Features
+Current Features
 --------
-
--   Play Doom with a Redis-powered backend
 
 -   Live player chat feed
 
--   Live game event log feed (shots, kills, deaths)
+-   Live game event log feed
 
--   Real-time leaderboards (kills, efficiency)
-
--   Per-map domination tracking
-
--   Smooth WebSocket updates (no refresh needed)
-
-![Gameplay](https://github.com/user-attachments/assets/9a344564-1b1e-4986-b0cd-efc62bee07db)
-
-Includes in-game chat (using Redis Streams)
-![Chat](https://github.com/user-attachments/assets/008f0079-5cd9-46e6-9d0a-0e06e703a629)
+-   Real-time leaderboards and per-map domination tracking
 
 * * * * *
 
@@ -34,15 +23,12 @@ Project Structure
 
 ```
 /
-├── WADs/              # Contains the game WAD files (e.g., freedoom1.wad)
 ├── backend/           # Python Flask + Socket.IO server (real-time event broadcasting)
+├── build/             # Scripts to automate deployment of backend, frontend and game
 ├── frontend/          # React-based frontend UI (game logs, player chat, leaderboards)
-├── game-code/         # Original DOOM source code (modified for Redis integration)
-├── hiredis-master/    # Local hiredis library (compiled during game build)
-├── clean-ports.sh     # Optional script to free ports 5000/3000 manually
-├── start.sh           # Main script: builds, runs backend/frontend, launches the game
+├── game-code/         # DOOM source code (modified for Redis integration)
 ├── README.md          # This file
-└── .env               # Environment variables (Redis host, port, etc.)
+└── .env.example       # Environment variables (Redis host, port, etc.)
 
 ```
 
@@ -61,6 +47,8 @@ Requirements:
 
 -   Linux/macOS system
 
+-   cmake/gcc
+
 1.  **Clone the repository**
 
 ```
@@ -72,7 +60,7 @@ cd doom-redis
 1.  **Add a WAD file**
 
 The repo comes with a downloaded version of Freedoom 1 & 2. 
-You can find them under the `WADs` folder.
+You can find them under the `game-code/WADs` folder.
 
 You can include your own WADs under that folder and read from them at runtime
 
@@ -95,7 +83,7 @@ The script will load these variables both for the game code and the backend to r
 
 3.  **Run the project via single script**
 
-Currently you need to do the following minimum configuration to define the Player Name and WAD in the `start.sh` script. Replace with your own values as needed
+Currently you need to do the following minimum configuration to define the Player Name and WAD in the `build/start.sh` script. Replace with your own values as needed
 
 ```
 # Configuration
@@ -121,16 +109,22 @@ This will:
 
 -   Launch everything in proper order
 
+* * * * *
+
+Build manually (no script)
+-----------
+
 If you wish to run everything individually you should:
-1. Compile the Doom game
+
+1.  **Compile the Doom game**
 ```
-cd game-code/linuxdoom-1.10
-make clean
+cd game-code/build
+cmake ..
 make
 ```
-This will generate the linuxxdoom binary inside `game-code/linuxdoom-1.10/linux/`
+This will generate the `redis-doom` binary inside `game-code/build`
 
-2. Setup the backend
+2.  **Setup the backend**
 ```
 cd backend
 
@@ -148,7 +142,7 @@ python3 app.py
 ```
 Note: The backend expects a Redis server to be running based on your .env settings
 
-3. Setup frontend
+3.  **Setup frontend**
 ```
 cd frontend
 
@@ -159,15 +153,15 @@ npm install
 npm start
 ```
 
-4. Launch the game
+4.  **Launch the game**
 ```
-cd game-code/linuxdoom-1.10/linux
+cd game-code/build
 
 # Replace DOOM.WAD with your WAD filename if different
-./linuxxdoom -file ../../WADs/freedoom1.wad -playerName Doomslayer
+./redis-doom -iwad ../WADs/freedoom1.wad -playerName DoomSlayer
 ```
 
-5. Redis Setup (Reminder)
+5.  **Redis Setup (Reminder)**
 
 Make sure your Redis server is running before you launch the backend. You can either:
 
@@ -175,7 +169,7 @@ Run a local Redis server (redis-server) or
 
 Connect to an external Redis as configured in your .env
 
-If ports 5000 (backend) or 3000 (frontend) are occupied, you can manually kill them or use the provided `clean-ports.sh` script.
+If ports 5000 (backend) or 3000 (frontend) are occupied, you can manually kill them or use the provided `build/clean-ports.sh` script.
 
 * * * * *
 
@@ -251,7 +245,7 @@ Credits
 
 -   Hiredis: RedisLabs
 
--   Thanks to all open-source contributors.
+-   SDL2-Doom repo (https://github.com/AlexOberhofer/sdl2-doom)
 
 * * * * *
 
