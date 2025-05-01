@@ -1,0 +1,27 @@
+- Game code
+
+p_pspr.c:
+- Line 251: Add shots fired to redis stream
+- Line 44: included doom_redis.h
+
+p_inter.c:
+- Line 711: Added player death to stream function
+- Line 689: Added kill to stream function
+
+m_menu.c:
+- Line 875
+
+g_game.c:
+- Line 800: Amended G_PlayerReborn to maintain the playerName
+
+d_player.h:
+- Line 167: Added playerName in the struct
+
+d_main.c:
+- Line 1199: Looking for -playerName parameter to set it in the player struct
+
+For CHAT functionality:
+
+
+- Folders
+

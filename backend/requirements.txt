@@ -1,0 +1,6 @@
+flask
+flask-socketio
+redis
+eventlet
+flask-cors
+dotenv
