@@ -18,7 +18,7 @@ SDL2_*/
 README-SDL.txt
 *.zip
 cmake-*/
-game-code/build/*
+game-code/build/
 
 # Python
 backend/__pycache__/

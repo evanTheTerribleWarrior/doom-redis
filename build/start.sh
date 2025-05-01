@@ -8,6 +8,8 @@ export $(grep -v '^#' .env | xargs)
 ROOT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
 BUILD_DIR="$ROOT_DIR/build"
 LOG_FILE="$BUILD_DIR/build.log"
+
+{
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 GAME_DIR="$ROOT_DIR/game-code/src"
@@ -60,6 +62,12 @@ wait_for_port() {
 }
 
 echo "[Step 1] Building the game..."
+
+if [ ! -d "$GAME_BUILD_DIR" ]; then
+  echo "[Init] Creating missing build directory: $GAME_BUILD_DIR"
+  mkdir -p "$GAME_BUILD_DIR"
+fi
+
 find "$GAME_BUILD_DIR" -mindepth 1 -delete
 cd "$GAME_BUILD_DIR"
 cmake ..
@@ -104,3 +112,5 @@ cd "$GAME_BUILD_DIR"
 DOOM_PID=$!
 
 echo "[Build] All components launched successfully!"
+
+} 2>&1 | tee "$LOG_FILE"
