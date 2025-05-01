@@ -18,6 +18,13 @@ Current Features
 
 * * * * *
 
+Work in Progress
+--------
+
+-   In-game updates/notifications
+
+* * * * *
+
 Project Structure
 -----------------
 
@@ -76,8 +83,11 @@ Modify `.env` if you are using an external Redis:
 REDIS_HOST=<redis domain>
 REDIS_PORT=<redis port>
 REDIS_PASSWORD=<redis password>
+SOUNDFONT=<soundfont file>
 
 ```
+
+Note the `SOUNDFONT` variable. This will allow you to load a soundfont file to be used for music in the game. If you don't want sound leave this empty
 
 The script will load these variables both for the game code and the backend to read
 
