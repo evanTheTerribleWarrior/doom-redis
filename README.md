@@ -3,7 +3,7 @@ DOOM Redis Edition
 
 Play Doom with a live Web UI showing real-time game stats, leaderboards, and chat --- powered by Redis Streams and WebSockets.
 
-![Image](https://github.com/user-attachments/assets/7ce7cfca-d15b-4e04-b1e7-01ec7c0368a5)
+![Image](https://github.com/user-attachments/assets/a97bd1cf-cfb2-4185-b1fe-5703b738259c)
 
 * * * * *
 
