@@ -1,3 +1,0 @@
-/Users/eresvanis/Desktop/doom-redis/game-code/build/CMakeFiles/redis-doom.dir
-/Users/eresvanis/Desktop/doom-redis/game-code/build/CMakeFiles/edit_cache.dir
-/Users/eresvanis/Desktop/doom-redis/game-code/build/CMakeFiles/rebuild_cache.dir
