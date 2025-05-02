@@ -18,7 +18,8 @@ d_main.c:
 - Line 1199: Looking for -playerName parameter to set it in the player struct
 
 For CHAT functionality:
-TBC
+- i_input.c:
+    - Line 74 and down: commented out the a,w,s,d keys so that Chat can use them. navigation only via arrow buttons
 
 For PUBSUB functionality:
 TBC
