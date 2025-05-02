@@ -60,6 +60,13 @@ def start_event_consumer(r, socketio):
                             r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
                             continue
 
+                        if type == 'joined':
+                            print("Publishing joined event")
+                            r.publish(BROADCAST_CHANNEL, f"{player} joined the game")
+                            r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
+                            continue
+                        
+
                         log_msg = None
                         pipe = r.pipeline()
 

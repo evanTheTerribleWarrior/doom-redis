@@ -1844,11 +1844,13 @@ void D_DoomMain (void)
 	snprintf(players[consoleplayer].playerName, MAX_PLAYER_NAME, "%s", chosenName);
 
 	InitRedis(&mainContext);
-	StartPubSubListener(chosenName);
+	StartPubSubListener(players[consoleplayer].playerName);
 
 	if(!PlayerExistsInRedis(mainContext, players[consoleplayer].playerName)) {
 		AddPlayerToRedis(mainContext, players[consoleplayer].playerName);
 	}
+    
+    AnnouncePlayer(mainContext, players[consoleplayer].playerName);
 
     D_DoomLoop ();  // never returns
 

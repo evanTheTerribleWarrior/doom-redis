@@ -194,6 +194,10 @@ If ports 5000 (backend) or 3000 (frontend) are occupied, you can manually kill t
 Project Architecture
 --------------------
 
+If you want to look into the implementation details, check for the files:
+```
+game-code/include/redis-doom.h
+game-code/src/redis-doom.c
 ```
 +-----------------------------------------------------------+
 

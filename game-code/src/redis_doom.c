@@ -91,6 +91,17 @@ void AddPlayerToRedis(redisContext *c, const char *playerName)
     FreeRedisReply(reply);
 }
 
+void AnnouncePlayer(redisContext *c, const char *playerName)
+{
+    redisReply *reply;
+
+    char message[100];
+    snprintf(message, sizeof(message), "Player Joined: %s", playerName);
+
+    reply = redisCommand(c, "XADD doom:events * type joined playerName %s",playerName);
+    FreeRedisReply(reply);
+}
+
 long long PlayerExistsInRedis(redisContext *c, const char* playerName)
 {
     redisReply *reply;
