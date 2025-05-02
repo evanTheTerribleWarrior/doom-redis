@@ -21,6 +21,34 @@ def safe_decode(value):
         return value
     else:
         return ''
+    
+def check_kill_spree(player, streak):
+
+    status = None
+    apply_spree = False
+
+    streak = int(streak)
+
+    if streak == 5:
+        status = "AWESOME"
+        apply_spree = True
+    elif streak == 10:
+        status = "DOMINATING"
+        apply_spree = True
+    elif streak == 15:
+        status = "UNSTOPPABLE"
+        apply_spree = True
+    elif streak == 20:
+        status = "LEGENDARY"
+        apply_spree = True
+    elif streak == 30:
+        status = "TRUE SLAYER"
+        apply_spree = True
+
+    if apply_spree:
+        return f"{player} {streak} kill spree: {status}"  
+    else:
+        return None  
 
 def create_consumer_groups(r):
     for stream, group in [(EVENT_STREAM, EVENT_GROUP), (CHAT_STREAM, CHAT_GROUP)]:
@@ -76,12 +104,17 @@ def start_event_consumer(r, socketio):
                             pipe.hincrby(f'doom:player:{player}', 'totalKills', 1)
                             pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalKills', 1)
                             pipe.zincrby('doom:leaderboard:kills', 1, player)
-                            #r.publish('doom:players:broadcast', log_msg)
+                            r.incrby(f'doom:player:{player}:streak', 1)
+                            streak = r.get(f'doom:player:{player}:streak')
+                            kill_spree = check_kill_spree(player, streak)
+                            if kill_spree is not None:
+                                pipe.publish(BROADCAST_CHANNEL, kill_spree)
 
                         elif type == 'death':
                             log_msg = f"{player} WAS KILLED by {target or 'something'}"
                             pipe.hincrby(f'doom:player:{player}', 'totalDeaths', 1)
                             pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalDeaths', 1)
+                            pipe.set(f'doom:player:{player}:streak', "0")
                             pipe.publish(BROADCAST_CHANNEL, log_msg)
 
                         elif type == 'shot':
