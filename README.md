@@ -29,10 +29,10 @@ Work in Progress
 
 * * * * *
 
-Fixes in Progress
+Fixes
 --------
 
-- Original repo had certain keys bound so those can't be used on the chat functionality. Need to change the code logic to allow all keys
+- Original repo had certain keys bound so those can't be used on the chat functionality. Need to change the code logic to allow all keys ---> Fixed, commented out relevant code lines
 
 Project Structure
 -----------------
