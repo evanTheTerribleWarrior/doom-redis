@@ -215,6 +215,7 @@ void AddChatEvent(redisContext *c, const char *playerName, const char *message){
  */
 
 void SetPubSubMessage(const char* incomingMessage) {
+    memset(redisNotificationBuffer, 0, sizeof(redisNotificationBuffer));
     strncpy(redisNotificationBuffer, incomingMessage, sizeof(redisNotificationBuffer));
     redisNotificationLen = strlen(redisNotificationBuffer);
     redisNotificationMode = true;
@@ -227,8 +228,10 @@ void* PubSubListenerThread(void *arg) {
     redisReply *reply;
 
     if (InitRedis(&pubSubContext) == 0) {
-        
         reply = redisCommand(pubSubContext, "SUBSCRIBE doom:player:%s", playerName);
+        FreeRedisReply(reply);
+
+        reply = redisCommand(pubSubContext, "SUBSCRIBE doom:players:broadcast");
         FreeRedisReply(reply);
     }
     else {

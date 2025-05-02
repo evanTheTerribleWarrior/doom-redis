@@ -10,20 +10,28 @@ Play Doom with a live Web UI showing real-time game stats, leaderboards, and cha
 Current Features
 --------
 
--   Live player chat feed
+-   Live player chat feed (Redis Streams)
 
--   Live game event log feed
+-   Live game event log feed (Redis Streams)
 
--   Real-time leaderboards and per-map domination tracking
+-   Real-time leaderboards and per-map domination tracking (Redis Streams)
+
+-   Real-time in-game notifications (Redis PubSub)
 
 * * * * *
 
 Work in Progress
 --------
 
--   In-game updates/notifications
+-   More cases of in-game notifications
+-   Looking for other cool ideas!
 
 * * * * *
+
+Fixes in Progress
+--------
+
+- Original repo had certain keys bound so those can't be used on the chat functionality. Need to change the code logic to allow all keys
 
 Project Structure
 -----------------

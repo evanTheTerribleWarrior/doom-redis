@@ -292,7 +292,7 @@ void DrawRedisNotification() {
         for (int i = 0; i < redisNotificationLen; ++i)
             HUlib_addCharToTextLine(&w_redisNotification, redisNotificationBuffer[i]);
 
-        redisNotificationCounter = HU_MSGTIMEOUT;
+        redisNotificationCounter = 70;
     }
 }
 
@@ -391,7 +391,7 @@ void HU_Start(void)
 
     // Add Text Line for Redis Chat and PubSub
     HUlib_initTextLine(&w_redischatinput, 20, 160, hu_font, HU_FONTSTART);
-    HUlib_initTextLine(&w_redisNotification, HU_MSGX, HU_MSGY, hu_font, HU_FONTSTART);
+    HUlib_initTextLine(&w_redisNotification, 20, 140, hu_font, HU_FONTSTART);
 
     headsupactive = true;
 

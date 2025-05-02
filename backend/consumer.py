@@ -11,6 +11,9 @@ CHAT_GROUP = 'doom_chat_consumer_group'
 EVENT_CONSUMER = 'doom_event_consumer'
 CHAT_CONSUMER = 'doom_chat_consumer'
 
+# Broadcast / PubSub
+BROADCAST_CHANNEL = 'doom:players:broadcast'
+
 def safe_decode(value):
     if isinstance(value, bytes):
         return value.decode()
@@ -60,15 +63,17 @@ def start_event_consumer(r, socketio):
                         log_msg = None
 
                         if type == 'kill':
-                            log_msg = f"Player {player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
+                            log_msg = f"{player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
                             r.hincrby(f'doom:player:{player}', 'totalKills', 1)
                             r.hincrby(f'doom:player:{player}:map:{mapname}', 'totalKills', 1)
                             r.zincrby('doom:leaderboard:kills', 1, player)
+                            #r.publish('doom:players:broadcast', log_msg)
 
                         elif type == 'death':
-                            log_msg = f"Player {player} WAS KILLED by {target or 'something'} on {mapname}"
+                            log_msg = f"{player} WAS KILLED by {target or 'something'}"
                             r.hincrby(f'doom:player:{player}', 'totalDeaths', 1)
                             r.hincrby(f'doom:player:{player}:map:{mapname}', 'totalDeaths', 1)
+                            r.publish(BROADCAST_CHANNEL, log_msg)
 
                         elif type == 'shot':
                             log_msg = f"{player} fired a {weapon} on {mapname}"
@@ -121,9 +126,10 @@ def start_chat_consumer(r, socketio):
                         print(f"[Debug] Decoded player='{player}', message='{message}'")    
 
                         if player and message:
-                            chat_msg = f"{player}: {message}"
+                            chat_msg = f"[{player}]: {message}"
                             print("Sending message to frontend: ", chat_msg)
                             socketio.emit('chat:update', {'chat_msg': chat_msg})
+                            r.publish(BROADCAST_CHANNEL, chat_msg)
 
                         r.xack(CHAT_STREAM, CHAT_GROUP, event_id)
                         print(f"[Redis] Acknowledged Chat {event_id}")
