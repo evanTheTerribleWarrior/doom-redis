@@ -24,6 +24,7 @@ Work in Progress
 --------
 
 -   More cases of in-game notifications
+-   Per-WAD data separation
 -   Looking for other cool ideas!
 
 * * * * *

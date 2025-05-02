@@ -1,6 +1,4 @@
 *.o
-*.wad
-*.WAD
 */.savegame/
 .cproject
 .project
