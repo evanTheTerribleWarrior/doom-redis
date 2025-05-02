@@ -61,36 +61,39 @@ def start_event_consumer(r, socketio):
                             continue
 
                         log_msg = None
+                        pipe = r.pipeline()
 
                         if type == 'kill':
                             log_msg = f"{player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
-                            r.hincrby(f'doom:player:{player}', 'totalKills', 1)
-                            r.hincrby(f'doom:player:{player}:map:{mapname}', 'totalKills', 1)
-                            r.zincrby('doom:leaderboard:kills', 1, player)
+                            
+                            pipe.hincrby(f'doom:player:{player}', 'totalKills', 1)
+                            pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalKills', 1)
+                            pipe.zincrby('doom:leaderboard:kills', 1, player)
                             #r.publish('doom:players:broadcast', log_msg)
 
                         elif type == 'death':
                             log_msg = f"{player} WAS KILLED by {target or 'something'}"
-                            r.hincrby(f'doom:player:{player}', 'totalDeaths', 1)
-                            r.hincrby(f'doom:player:{player}:map:{mapname}', 'totalDeaths', 1)
-                            r.publish(BROADCAST_CHANNEL, log_msg)
+                            pipe.hincrby(f'doom:player:{player}', 'totalDeaths', 1)
+                            pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalDeaths', 1)
+                            pipe.publish(BROADCAST_CHANNEL, log_msg)
 
                         elif type == 'shot':
                             log_msg = f"{player} fired a {weapon} on {mapname}"
-                            r.hincrby(f'doom:player:{player}', 'totalShots', 1)
-                            r.hincrby(f'doom:player:{player}:map:{mapname}', 'totalShots', 1)
-                            r.hincrby(f'doom:player:{player}:weapons', weapon, 1)
+                            pipe.hincrby(f'doom:player:{player}', 'totalShots', 1)
+                            pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalShots', 1)
+                            pipe.hincrby(f'doom:player:{player}:weapons', weapon, 1)
 
                         # Always update efficiency after any event
                         kills = int(r.hget(f'doom:player:{player}', 'totalKills') or 0)
                         shots = int(r.hget(f'doom:player:{player}', 'totalShots') or 0)
                         efficiency = round(kills / shots, 4)
-                        r.zadd('doom:leaderboard:efficiency', {player: efficiency})
+                        pipe.zadd('doom:leaderboard:efficiency', {player: efficiency})
 
                         if log_msg:
                             socketio.emit('leaderboard:update', {'log_msg': log_msg})
                             socketio.emit('gamelog:update', {'log_msg': log_msg})
 
+                        pipe.execute()
                         r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
 
                     except Exception as e:
