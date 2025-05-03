@@ -283,10 +283,4 @@ This repo is just for fun and to play around with friends.
 It does not take into account things like session management and other mechanisms
 that might matter in online games that share stats.
 
-For example, if I start the game with another player's name, it will add stats to that player.
-So if you want a proper management and isolation of each player you would need to
-add that logic.
-
-But who would want to ruin the fun??
-
 Anyway, happy playing and feel free to suggest additions that will make it more fun!

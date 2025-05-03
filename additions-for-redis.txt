@@ -25,3 +25,4 @@ For PUBSUB functionality:
 TBC
 
 
+// Add notes on exporting variables when building manually?
