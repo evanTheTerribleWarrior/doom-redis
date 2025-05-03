@@ -92,12 +92,10 @@ def start_event_consumer(r, socketio):
                             continue
 
                         if type == 'joined':
-                            print("Publishing joined event")
                             r.publish(BROADCAST_CHANNEL, f"{player} joined the game")
                             r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
                             continue
                         
-
                         log_msg = None
                         pipe = r.pipeline()
 
@@ -174,11 +172,8 @@ def start_chat_consumer(r, socketio):
                         player = safe_decode(raw_player)
                         message = safe_decode(raw_message)
 
-                        print(f"[Debug] Decoded player='{player}', message='{message}'")    
-
                         if player and message:
                             chat_msg = f"[{player}]: {message}"
-                            print("Sending message to frontend: ", chat_msg)
                             socketio.emit('chat:update', {'chat_msg': chat_msg})
                             r.publish(BROADCAST_CHANNEL, chat_msg)
 

@@ -40,81 +40,132 @@
 #include "w_wad.h"
 #include "z_zone.h"
 
+// Check if we are in chat mode
+#include "redis_doom.h"
+
 #define KEYQUEUE_SIZE 16
 
 static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
 static unsigned int s_KeyQueueWriteIndex = 0;
 static unsigned int s_KeyQueueReadIndex = 0;
 
+int vanilla_keyboard_mapping = 1;
 
-//TODO: Convert to key-map
-static unsigned char toDoomKey(unsigned int key)
+// Is the shift key currently down?
+
+static int shiftdown = 0;
+static unsigned int lastRawKey = 0;
+
+// Lookup table for mapping ASCII characters to their equivalent when
+// shift is pressed on an American layout keyboard:
+static const char shiftxform[] =
 {
-  switch (key)
-  {
-    case SDLK_RETURN:
-      key = KEY_ENTER;
-      break;
-    case SDLK_F1:
-      key = KEY_F1;
-      break;
-    case SDLK_F2:
-      key = KEY_F2;
-      break;
-    case SDLK_F3:
-      key = KEY_F3;
-      break;
-    case SDLK_LALT:
-    case SDLK_RALT:
-      key = KEY_LALT;
-      break;
-    case SDLK_ESCAPE:
-      key = KEY_ESCAPE;
-      break;
-    //case SDLK_a:
-    case SDLK_LEFT:
-      key = KEY_LEFTARROW;
-      break;
-    //case SDLK_d:
-    case SDLK_RIGHT:
-      key = KEY_RIGHTARROW;
-      break;
-    //case SDLK_w:
-    case SDLK_UP:
-      key = KEY_UPARROW;
-      break;
-   // case SDLK_s:
-    case SDLK_DOWN:
-      key = KEY_DOWNARROW;
-      break;
-    case SDLK_LCTRL:
-    case SDLK_RCTRL:
-      key = KEY_FIRE;
-      break;
-    case SDLK_SPACE:
-      key = KEY_USE;
-      break;
-    case SDLK_LSHIFT:
-    case SDLK_RSHIFT:
-      key = KEY_RSHIFT;
-      break;
-    case SDL_BUTTON_RIGHT:
-    case SDL_BUTTON_LEFT:
-      key = KEY_FIRE;
-      break;
-    case SDL_BUTTON_MIDDLE:
-      key = KEY_USE;
-      break;
-    default:
-      key = tolower(key);
-      break;
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    31, ' ', '!', '"', '#', '$', '%', '&',
+    '"', // shift-'
+    '(', ')', '*', '+',
+    '<', // shift-,
+    '_', // shift--
+    '>', // shift-.
+    '?', // shift-/
+    ')', // shift-0
+    '!', // shift-1
+    '@', // shift-2
+    '#', // shift-3
+    '$', // shift-4
+    '%', // shift-5
+    '^', // shift-6
+    '&', // shift-7
+    '*', // shift-8
+    '(', // shift-9
+    ':',
+    ':', // shift-;
+    '<',
+    '+', // shift-=
+    '>', '?', '@',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '[', // shift-[
+    '!', // shift-backslash - OH MY GOD DOES WATCOM SUCK
+    ']', // shift-]
+    '"', '_',
+    '\'', // shift-`
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '{', '|', '}', '~', 127
+};
+
+
+extern boolean redischatmode;
+
+// Get the equivalent ASCII (Unicode?) character for a keypress.
+
+static unsigned char GetTypedChar(unsigned char key)
+{
+
+    // Is shift held down?  If so, perform a translation.
+    if (shiftdown > 0)
+    {
+        if (key >= 0 && key < arrlen(shiftxform))
+        {
+            key = shiftxform[key];
+        }
+        else
+        {
+            key = 0;
+        }
     }
 
-  return key;
+    return key;
 }
+
+static unsigned char toDoomKey(unsigned int key)
+{
+    // Always allow these keys even in chat mode:
+    if (key == SDLK_ESCAPE)
+        return KEY_ESCAPE;
+    if (key == SDLK_RETURN)
+        return KEY_ENTER;
+    if (key == SDLK_BACKSPACE)
+        return KEY_BACKSPACE;
+
+    if (redischatmode)
+    {
+        // Return raw keycode and defer shift handling to GetTypedChar
+        return GetTypedChar(key);
+    }
+
+    // Gameplay key mappings
+    switch (key)
+    {
+        case SDLK_F1: return KEY_F1;
+        case SDLK_F2: return KEY_F2;
+        case SDLK_F3: return KEY_F3;
+        case SDLK_LALT:
+        case SDLK_RALT: return KEY_LALT;
+        case SDLK_LEFT: return KEY_LEFTARROW;
+        case SDLK_RIGHT: return KEY_RIGHTARROW;
+        case SDLK_UP: return KEY_UPARROW;
+        case SDLK_DOWN: return KEY_DOWNARROW;
+        case SDLK_LCTRL:
+        case SDLK_RCTRL: return KEY_FIRE;
+        case SDLK_SPACE: return KEY_USE;
+        case SDLK_LSHIFT:
+        case SDLK_RSHIFT: return KEY_RSHIFT;
+        case SDL_BUTTON_RIGHT:
+        case SDL_BUTTON_LEFT: return KEY_FIRE;
+        case SDL_BUTTON_MIDDLE: return KEY_USE;
+        default: return tolower(key);
+    }
+}
+
+
 
 static void queueKeyPress(int pressed, unsigned int keyCode)
 {
+  lastRawKey = keyCode;
   unsigned char key = toDoomKey(keyCode);
   unsigned short keyData = (pressed << 8) | key;
 
@@ -184,72 +235,8 @@ int GetKey(int* pressed, unsigned char* doomKey)
     return k_pressed;
 }
 
-int vanilla_keyboard_mapping = 1;
 
-// Is the shift key currently down?
 
-static int shiftdown = 0;
-
-// Lookup table for mapping ASCII characters to their equivalent when
-// shift is pressed on an American layout keyboard:
-static const char shiftxform[] =
-{
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-    31, ' ', '!', '"', '#', '$', '%', '&',
-    '"', // shift-'
-    '(', ')', '*', '+',
-    '<', // shift-,
-    '_', // shift--
-    '>', // shift-.
-    '?', // shift-/
-    ')', // shift-0
-    '!', // shift-1
-    '@', // shift-2
-    '#', // shift-3
-    '$', // shift-4
-    '%', // shift-5
-    '^', // shift-6
-    '&', // shift-7
-    '*', // shift-8
-    '(', // shift-9
-    ':',
-    ':', // shift-;
-    '<',
-    '+', // shift-=
-    '>', '?', '@',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '[', // shift-[
-    '!', // shift-backslash - OH MY GOD DOES WATCOM SUCK
-    ']', // shift-]
-    '"', '_',
-    '\'', // shift-`
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-    'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '{', '|', '}', '~', 127
-};
-
-// Get the equivalent ASCII (Unicode?) character for a keypress.
-
-static unsigned char GetTypedChar(unsigned char key)
-{
-    // Is shift held down?  If so, perform a translation.
-    if (shiftdown > 0)
-    {
-        if (key >= 0 && key < arrlen(shiftxform))
-        {
-            key = shiftxform[key];
-        }
-        else
-        {
-            key = 0;
-        }
-    }
-
-    return key;
-}
 
 static void UpdateShiftStatus(int pressed, unsigned char key)
 {
@@ -261,8 +248,9 @@ static void UpdateShiftStatus(int pressed, unsigned char key)
         change = -1;
     }
 
-    if (key == KEY_RSHIFT) {
-        shiftdown += change;
+    if (lastRawKey == SDLK_LSHIFT || lastRawKey == SDLK_RSHIFT) {
+      shiftdown += change;
+      printf("[ShiftStatus] Shift %s -> shiftdown: %d\n", pressed ? "down" : "up", shiftdown);
     }
 }
 
