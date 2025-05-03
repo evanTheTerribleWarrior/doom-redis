@@ -1,6 +1,9 @@
 import redis
 import time
 
+# General players key
+PLAYERS_KEY = 'doom:players'
+
 # Stream and Consumer Group Definitions
 EVENT_STREAM = 'doom:events'
 CHAT_STREAM = 'doom:chat'
@@ -100,33 +103,38 @@ def start_event_consumer(r, socketio):
 
                         if type == 'kill':
                             log_msg = f"{player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
-                            
-                            pipe.hincrby(f'doom:player:{player}', 'totalKills', 1)
-                            pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalKills', 1)
-                            pipe.zincrby('doom:leaderboard:kills', 1, player)
-                            r.incrby(f'doom:player:{player}:streak', 1)
-                            streak = r.get(f'doom:player:{player}:streak')
+
+                            r.incrby(f'{PLAYERS_KEY}:{player}:streak', 1)
+                            streak = r.get(f'{PLAYERS_KEY}:{player}:streak')
                             kill_spree = check_kill_spree(player, streak)
                             if kill_spree is not None:
                                 pipe.publish(BROADCAST_CHANNEL, kill_spree)
+                            
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:total-stats', 'totalKills', 1)
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:map:{mapname}', 'totalKills', 1)
+                            pipe.zincrby('doom:leaderboard:kills', 1, player)
+                            
 
                         elif type == 'death':
                             log_msg = f"{player} WAS KILLED by {target or 'something'}"
-                            pipe.hincrby(f'doom:player:{player}', 'totalDeaths', 1)
-                            pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalDeaths', 1)
-                            pipe.set(f'doom:player:{player}:streak', "0")
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:total-stats', 'totalDeaths', 1)
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:map:{mapname}', 'totalDeaths', 1)
+                            pipe.set(f'{PLAYERS_KEY}:{player}:streak', "0")
                             pipe.publish(BROADCAST_CHANNEL, log_msg)
 
                         elif type == 'shot':
                             log_msg = f"{player} fired a {weapon} on {mapname}"
-                            pipe.hincrby(f'doom:player:{player}', 'totalShots', 1)
-                            pipe.hincrby(f'doom:player:{player}:map:{mapname}', 'totalShots', 1)
-                            pipe.hincrby(f'doom:player:{player}:weapons', weapon, 1)
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:total-stats', 'totalShots', 1)
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:map:{mapname}', 'totalShots', 1)
+                            pipe.hincrby(f'{PLAYERS_KEY}:{player}:weapons', weapon, 1)
 
                         # Always update efficiency after any event
-                        kills = int(r.hget(f'doom:player:{player}', 'totalKills') or 0)
-                        shots = int(r.hget(f'doom:player:{player}', 'totalShots') or 0)
-                        efficiency = round(kills / shots, 4)
+                        kills = int(r.hget(f'{PLAYERS_KEY}:{player}:total-stats', 'totalKills') or 0)
+                        shots = int(r.hget(f'{PLAYERS_KEY}:{player}:total-stats', 'totalShots') or 0)
+                        if shots > 0:
+                            efficiency = round(kills / shots, 4)
+                        else:
+                            efficiency = 0.0
                         pipe.zadd('doom:leaderboard:efficiency', {player: efficiency})
 
                         if log_msg:

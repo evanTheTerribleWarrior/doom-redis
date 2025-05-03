@@ -78,13 +78,13 @@ def leaderboard():
 
     for p in players:
         name = p.decode()
-        stats = r.hgetall(f'doom:player:{name}')
+        stats = r.hgetall(f'doom:players:{name}:total-stats')
         kills = int(stats.get(b'totalKills', 0))
         shots = int(stats.get(b'totalShots', 0))
         deaths = int(stats.get(b'totalDeaths', 0))
         efficiency = round(kills / shots, 2) if shots > 0 else 0
 
-        weapon_stats = r.hgetall(f'doom:player:{name}:weapons')
+        weapon_stats = r.hgetall(f'doom:players:{name}:weapons')
         preferred_weapon = "unknown"
         if weapon_stats:
             preferred_weapon = max(weapon_stats.items(), key=lambda x: int(x[1]))[0].decode()
@@ -107,7 +107,7 @@ def map_leaderboard():
 
     for p in players:
         name = p.decode()
-        for key in r.scan_iter(f"doom:player:{name}:map:*"):
+        for key in r.scan_iter(f"doom:players:{name}:map:*"):
             _, _, player, _, mapname = key.decode().split(':')
             stats = r.hgetall(key)
             kills = int(stats.get(b'totalKills', 0))

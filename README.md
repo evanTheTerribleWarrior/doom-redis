@@ -32,7 +32,7 @@ Work in Progress
 Fixes
 --------
 
-- Original repo had certain keys bound so those can't be used on the chat functionality. Need to change the code logic to allow all keys ---> Fixed, commented out relevant code lines
+- Currently working to fully fix the chat characters and what is actually printed
 
 Project Structure
 -----------------
