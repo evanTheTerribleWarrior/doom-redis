@@ -1846,9 +1846,17 @@ void D_DoomMain (void)
 	InitRedis(&mainContext);
 	StartPubSubListener(players[consoleplayer].playerName);
 
+    // Auth logic (TBC)
+    // 1. Check if player name exists in this Redis DB
+    // 2. If it does, check the password. Throw error if password doesnt match
+    // 3. If it does not exist, register the player and password.
+
 	if(!PlayerExistsInRedis(mainContext, players[consoleplayer].playerName)) {
 		AddPlayerToRedis(mainContext, players[consoleplayer].playerName);
 	}
+    else {
+        CheckPlayerPassword(mainContext, players[consoleplayer].playerName);
+    }
     
     AnnouncePlayer(mainContext, players[consoleplayer].playerName);
 

@@ -85,10 +85,34 @@ void CloseRedis(redisContext **c)
 void AddPlayerToRedis(redisContext *c, const char *playerName)
 {
     redisReply *reply;
+    const char *password = getenv("PLAYER_PASSWORD");
 
+    if (strlen(password) == 0) {
+        printf("[Redis Error] No password set for new player '%s'. Set PLAYER_PASSWORD in .env\n", playerName);
+        exit(1);
+    }
+
+    // Add player hash with the password
+    reply = redisCommand(c, "HSET doom:player-auth:%s password %s", playerName, password);
+    FreeRedisReply(reply);
+    
     // Add new player name in the set
     reply = redisCommand(c,"SADD doom:players %s", playerName);
     FreeRedisReply(reply);
+}
+
+void CheckPlayerPassword(redisContext *c, const char *playerName)
+{
+    redisReply *reply;
+    const char *password = getenv("PLAYER_PASSWORD");
+    
+    reply = redisCommand(c, "HGET doom:player-auth:%s password", playerName);
+    if (reply && reply->type == REDIS_REPLY_STRING) {
+        if (strcmp(reply->str, password) != 0) {
+            printf("[Redis Error] Invalid password for player %s. Exiting...\n", playerName);
+            exit(1);
+        }
+    }
 }
 
 void AnnouncePlayer(redisContext *c, const char *playerName)

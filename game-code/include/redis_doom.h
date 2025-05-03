@@ -43,6 +43,8 @@ void AddPlayerToRedis(redisContext *c, const char *playerName);
 // Check if player exists already in Redis
 long long PlayerExistsInRedis(redisContext *c, const char* playerName);
 
+void CheckPlayerPassword(redisContext *c, const char *playerName);
+
 void AnnouncePlayer(redisContext *c, const char *playerName);
 
 void GetCurrentEpisodeMap(char* buffer, size_t size);

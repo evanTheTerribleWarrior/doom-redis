@@ -93,8 +93,13 @@ REDIS_HOST=<redis domain>
 REDIS_PORT=<redis port>
 REDIS_PASSWORD=<redis password>
 SOUNDFONT=<soundfont file>
+PASSWORD=<Your password>
 
 ```
+
+The `.env.example` file comes with a default `PASSWORD`. Add your own. This is an extremely simple way to avoid clashes e.g. when one player might set the same `playerName` as an existing one and mess up the stats. So you will need your own unique `playerName` which keeps things cleaner.
+
+Obviously this is a free repo with intention to have fun with a common Redis server, so it does not come with security-first principles!
 
 Note the `SOUNDFONT` variable. This will allow you to load a soundfont file to be used for music in the game. If you don't want sound leave this empty
 
