@@ -75,7 +75,7 @@ Requirements:
 
 -   cmake/gcc
 
-1.  **Clone the repository**
+###  **Clone the repository**
 
 ```
 git clone https://github.com/your-username/doom-redis.git
@@ -83,7 +83,7 @@ cd doom-redis
 
 ```
 
-1.  **Add a WAD file**
+2.  **Add a WAD file**
 
 The repo comes with a downloaded version of Freedoom 1 & 2. 
 You can find them under the `game-code/WADs` folder.
