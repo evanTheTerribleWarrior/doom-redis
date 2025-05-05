@@ -83,14 +83,14 @@ cd doom-redis
 
 ```
 
-2.  **Add a WAD file**
+###  **Add a WAD file**
 
 The repo comes with a downloaded version of Freedoom 1 & 2. 
 You can find them under the `game-code/WADs` folder.
 
 You can include your own WADs under that folder and read from them at runtime
 
-2.  **Edit environment variables**
+###  **Edit environment variables**
 
 ```
 cp .env.example .env
@@ -121,7 +121,7 @@ Note the `SOUNDFONT` variable. This will allow you to load a soundfont file to b
 
 The script will load these variables both for the game code and the backend to read
 
-3.  **Run the project via single script**
+###  **Run the project via single script**
 
 From the root directory run the script:
 
@@ -148,7 +148,7 @@ Build manually (no script)
 
 If you wish to run everything individually you should:
 
-1.  **Compile the Doom game**
+###  **Compile the Doom game**
 ```
 cd game-code/build
 cmake ..
@@ -156,7 +156,7 @@ make
 ```
 This will generate the `redis-doom` binary inside `game-code/build`
 
-2.  **Setup the backend**
+###  **Setup the backend**
 ```
 cd backend
 
@@ -174,7 +174,7 @@ python3 app.py
 ```
 Note: The backend expects a Redis server to be running based on your .env settings
 
-3.  **Setup frontend**
+###  **Setup frontend**
 ```
 cd frontend
 
@@ -185,7 +185,7 @@ npm install
 npm start
 ```
 
-4.  **Populate env variables via export**
+###  **Populate env variables via export**
 
 The current `.env` file is like this:
 
@@ -207,7 +207,7 @@ export PLAYER_PASSWORD=TestPassword
 
 You can also export `PLAYER_NAME` or set it as parameter in the command line as shown below
 
-5.  **Run the game**
+###  **Run the game**
 ```
 cd game-code/build
 
