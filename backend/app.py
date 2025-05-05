@@ -5,6 +5,8 @@ from flask_socketio import SocketIO
 from flask_cors import CORS
 import redis
 import os
+from flask import request
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -37,6 +39,24 @@ r = redis.Redis(
 )
 
 
+# We get the WAD names based on the extracted WAD IDs from the game source code
+# This is used to present a proper friendly name instead of ID
+@app.route('/api/wads/wadnames')
+def load_wadnames():
+    wad_map = r.hgetall('doom:wads:wad-names')
+    result = []
+
+    for wadId, name in wad_map.items():
+        result.append({
+            'id': wadId.decode(),
+            'name': name.decode()
+        })
+
+    result.sort(key=lambda x: x['name'].lower())
+    return jsonify(result)
+
+# Used to pull the last 100 lines of logs
+# Triggered from the websocket as new logs arrive
 @app.route('/api/load_logs')
 def load_logs():
     entries = r.xrevrange('doom:events', count=100)
@@ -59,6 +79,8 @@ def load_logs():
 
     return jsonify(logs)
 
+# Used to pull last 100 chat messages in the UI
+# Triggered by the websocket every time new message arrives
 @app.route('/api/load_chat')
 def load_chat():
     entries = r.xrevrange('doom:chat', count=100)
@@ -71,30 +93,39 @@ def load_chat():
 
     return jsonify(chats)
 
+
 @app.route('/api/leaderboard')
 def leaderboard():
-    players = r.smembers('doom:players')
+    wadID = request.args.get('wadId')
+    if not wadID:
+        return jsonify({'error': 'Missing wadId'}), 400
+
+    leaderboard_key = f'doom:wads:stats:{wadID}:leaderboard:efficiency'
+    leaderboard_data = r.zrevrange(leaderboard_key, 0, -1, withscores=True)
+
     data = []
 
-    for p in players:
-        name = p.decode()
-        stats = r.hgetall(f'doom:players:{name}:total-stats')
+    for player, efficiency in leaderboard_data:
+        player = player.decode()
+        stats_key = f'doom:wads:stats:{wadID}:players:{player}'
+        weapon_key = f'doom:players:{player}:weapons'
+
+        stats = r.hgetall(stats_key)
         kills = int(stats.get(b'totalKills', 0))
         shots = int(stats.get(b'totalShots', 0))
         deaths = int(stats.get(b'totalDeaths', 0))
-        efficiency = round(kills / shots, 2) if shots > 0 else 0
 
-        weapon_stats = r.hgetall(f'doom:players:{name}:weapons')
+        weapon_stats = r.hgetall(weapon_key)
         preferred_weapon = "unknown"
         if weapon_stats:
             preferred_weapon = max(weapon_stats.items(), key=lambda x: int(x[1]))[0].decode()
 
         data.append({
-            'player': name,
+            'player': player,
             'kills': kills,
             'shots': shots,
             'deaths': deaths,
-            'efficiency': efficiency,
+            'efficiency': round(efficiency, 2),
             'preferredWeapon': preferred_weapon
         })
 
@@ -102,27 +133,75 @@ def leaderboard():
 
 @app.route('/api/map-leaderboard')
 def map_leaderboard():
-    players = r.smembers('doom:players')
+    wadID = request.args.get('wadId')
+    if not wadID:
+        return jsonify({'error': 'Missing wadId'}), 400
+
     map_stats = {}
+    prefix = f'doom:wads:stats:{wadID}:maps:'
 
-    for p in players:
-        name = p.decode()
-        for key in r.scan_iter(f"doom:players:{name}:map:*"):
-            _, _, player, _, mapname = key.decode().split(':')
-            stats = r.hgetall(key)
-            kills = int(stats.get(b'totalKills', 0))
-            shots = int(stats.get(b'totalShots', 0))
-            efficiency = round(kills / shots, 2) if shots > 0 else 0
+    for key in r.scan_iter(f'{prefix}*'):
+        key_parts = key.decode().split(':')
+        if len(key_parts) < 7:
+            continue
 
-            if mapname not in map_stats or map_stats[mapname]['kills'] < kills:
-                map_stats[mapname] = {
-                    'map': mapname,
-                    'topPlayer': name,
-                    'kills': kills,
-                    'efficiency': efficiency
-                }
+        mapname = key_parts[5]
+        player = key_parts[6]
+
+        stats = r.hgetall(key)
+        kills = int(stats.get(b'totalKills', 0))
+        shots = int(stats.get(b'totalShots', 0))
+        efficiency = round(kills / shots, 2) if shots > 0 else 0
+
+        current = map_stats.get(mapname)
+        if current is None or kills > current['kills']:
+            map_stats[mapname] = {
+                'map': mapname,
+                'topPlayer': player,
+                'kills': kills,
+                'efficiency': efficiency
+            }
 
     return jsonify(list(map_stats.values()))
+
+
+@app.route('/api/search_players')
+def search_players():
+    query = request.args.get('q', '')
+    #suggestions = r.ft('doom:player-search').sugget('doom:player-search', query)
+    suggestions = r.execute_command("FT.SUGGET", "doom:player-search", query, "MAX", 10)
+    return jsonify([s.decode() if isinstance(s, bytes) else s for s in suggestions])
+
+@app.route('/api/player/<player_name>')
+def player_stats(player_name):
+    stats_key = f'doom:players:{player_name}:total-stats'
+    weapon_key = f'doom:players:{player_name}:weapons'
+
+    if not r.exists(stats_key):
+        return jsonify({'error': 'Player not found'}), 404
+
+    stats = r.hgetall(stats_key)
+    kills = int(stats.get(b'totalKills', 0))
+    shots = int(stats.get(b'totalShots', 0))
+    deaths = int(stats.get(b'totalDeaths', 0))
+    efficiency = round(kills / shots, 2) if shots > 0 else 0.0
+
+    weapon_stats = r.hgetall(weapon_key)
+    preferred_weapon = "unknown"
+    if weapon_stats:
+        preferred_weapon = max(weapon_stats.items(), key=lambda x: int(x[1]))[0].decode()
+
+    return jsonify({
+        'player': player_name,
+        'kills': kills,
+        'shots': shots,
+        'deaths': deaths,
+        'efficiency': efficiency,
+        'preferredWeapon': preferred_weapon
+    })
+
+
+
 
 if __name__ == '__main__':
     create_consumer_groups(r) 

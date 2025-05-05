@@ -1,0 +1,2 @@
+- Complete MyStats component
+- Decide on per-WAD stat structure for leaderboard and per-player structure

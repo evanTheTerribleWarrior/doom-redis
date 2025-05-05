@@ -18,14 +18,18 @@ Current Features
 
 -   Real-time in-game notifications (Redis PubSub)
 
+-   Player Search (Redis Autocomplete - FT.SUGGET)
+
+-   Data separation per Doom WAD and per Map
+
 * * * * *
 
 Work in Progress
 --------
 
 -   More cases of in-game notifications
--   Per-WAD data separation
 -   Looking for other cool ideas!
+-   Test/build on windows and Linux
 
 * * * * *
 
@@ -86,18 +90,24 @@ You can include your own WADs under that folder and read from them at runtime
 cp .env.example .env
 ```
 
-Modify `.env` if you are using an external Redis:
+Modify `.env` accordingly:
 
 ```
-REDIS_HOST=<redis domain>
-REDIS_PORT=<redis port>
-REDIS_PASSWORD=<redis password>
-SOUNDFONT=<soundfont file>
-PASSWORD=<Your password>
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+SOUNDFONT=gzdoom.sf2
+PLAYER_PASSWORD=default
+PLAYER_NAME=
+WAD_NAME=
 
 ```
 
-The `.env.example` file comes with a default `PASSWORD`. Add your own. This is an extremely simple way to avoid clashes e.g. when one player might set the same `playerName` as an existing one and mess up the stats. So you will need your own unique `playerName` which keeps things cleaner.
+If you are using an external Redis instance please set the `REDIS_` values accordingly
+
+Please set `PLAYER_NAME` and `WAD_NAME` based on the player name you want and the wad name you have in the WADs directory that you want to use
+
+The `.env.example` file comes with a default `PLAYER_PASSWORD`. Add your own. This is an extremely simple way to avoid clashes e.g. when one player might set the same `playerName` as an existing one and mess up the stats. So you will need your own unique `playerName` which keeps things cleaner.
 
 Obviously this is a free repo with intention to have fun with a common Redis server, so it does not come with security-first principles!
 
@@ -177,23 +187,36 @@ npm install
 npm start
 ```
 
-4.  **Launch the game**
+4.  **Populate env variables via export**
+
+The current `.env` file is like this:
+
+```
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+SOUNDFONT=gzdoom.sf2
+PLAYER_PASSWORD=default
+PLAYER_NAME=
+WAD_NAME=
+```
+
+You need to export at least the `PLAYER_PASSWORD` if you change it
+e.g.
+```
+export PLAYER_PASSWORD=TestPassword
+```
+
+You can also export `PLAYER_NAME` or set it as parameter in the command line as shown below
+
+5.  **Run the game**
 ```
 cd game-code/build
 
-# Replace DOOM.WAD with your WAD filename if different
+# Replace DOOM.WAD with your WAD filename if different, and optionally add -playerName
+# if not already set in .env
 ./redis-doom -iwad ../WADs/freedoom1.wad -playerName DoomSlayer
 ```
-
-5.  **Redis Setup (Reminder)**
-
-Make sure your Redis server is running before you launch the backend. You can either:
-
-Run a local Redis server (redis-server) or
-
-Connect to an external Redis as configured in your .env
-
-If ports 5000 (backend) or 3000 (frontend) are occupied, you can manually kill them or use the provided `build/clean-ports.sh` script.
 
 * * * * *
 

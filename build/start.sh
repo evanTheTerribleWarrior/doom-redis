@@ -16,10 +16,6 @@ GAME_DIR="$ROOT_DIR/game-code/src"
 GAME_BUILD_DIR="$ROOT_DIR/game-code/build"
 WAD_DIR="$ROOT_DIR/game-code/WADs"
 
-# Configuration - change this to the values you want
-PLAYER_NAME="DoomSlayer"
-WAD_NAME="freedoom1.wad"
-
 # Ensure build directory exists
 mkdir -p "$BUILD_DIR"
 

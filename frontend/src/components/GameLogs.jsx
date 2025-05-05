@@ -43,7 +43,7 @@ export default function MapDominators() {
   }, []);
 
   return (
-    <Box sx={{ width: '100%', height: '100%', backgroundColor: '#121212', color: '#f0f0f0', padding: 2 }}>
+    <Box sx={{ width: '100%', height: '100%', color: '#f0f0f0', padding: 2 }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, height: 'calc(100vh - 50px)', mt: 2 }}>
         <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#1c1c1c', overflowY: 'auto' }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#ff4444' }}>Game Events</Typography>

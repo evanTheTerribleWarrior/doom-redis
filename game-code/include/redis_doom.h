@@ -14,6 +14,8 @@
     #define secure_getenv getenv
 #endif
 
+extern char doom_wad_id[41];
+
 extern redisContext *mainContext;
 
 extern boolean redischatmode;
@@ -46,6 +48,10 @@ long long PlayerExistsInRedis(redisContext *c, const char* playerName);
 void CheckPlayerPassword(redisContext *c, const char *playerName);
 
 void AnnouncePlayer(redisContext *c, const char *playerName);
+
+void CalculateWADHash(void);
+
+void SendWADHashToRedis(redisContext *c, const char *iwad_filename);
 
 void GetCurrentEpisodeMap(char* buffer, size_t size);
 const char* GetMobjTypeName(int mobjType);

@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Container, Tabs, Tab } from '@mui/material';
-import Leaderboard from './Leaderboard';
-import MapDominators from './MapDominators';
-import GameLogs from './GameLogs';
+import GameLogs from './components/GameLogs';
+import PlayerSearch from './components/PlayerSearch';
+import GameStats from './components/GameStats';
 import './App.css';
 
 function AppTabs() {
@@ -13,12 +13,13 @@ function AppTabs() {
   React.useEffect(() => {
     switch (location.pathname) {
       case '/':
+      case '/stats':
         setValue(0);
         break;
-      case '/map-dominators':
+      case '/game-logs':
         setValue(1);
         break;
-      case '/game-logs':
+      case '/player-search':
         setValue(2);
         break;
       default:
@@ -29,9 +30,9 @@ function AppTabs() {
 
   return (
     <Tabs value={value} textColor="inherit" indicatorColor="secondary">
-      <Tab label="Leaderboard" component={Link} to="/" />
-      <Tab label="Map Dominators" component={Link} to="/map-dominators" />
+      <Tab label="Stats" component={Link} to="/stats" />
       <Tab label="Chat & Logs" component={Link} to="/game-logs" />
+      <Tab label="Player Search" component={Link} to="/player-search" />
     </Tabs>
   );
 }
@@ -49,11 +50,13 @@ export default function App() {
             <AppTabs />
           </Toolbar>
         </AppBar>
-        <Container maxWidth="lg" sx={{ mt: 4, borderRadius: 2, p: 3 }}>
+        <Container maxWidth="lg" sx={{ borderRadius: 2}}>
           <Routes>
-            <Route path="/" element={<Leaderboard />} />
-            <Route path="/map-dominators" element={<MapDominators />} />
+            <Route path="/" element={<GameStats />} />
+            <Route path="/stats" element={<GameStats />} />
+            <Route path="/stats/*" element={<GameStats />} />
             <Route path="/game-logs" element={<GameLogs />} />
+            <Route path="/player-search" element={<PlayerSearch />} />
           </Routes>
         </Container>
       </div>

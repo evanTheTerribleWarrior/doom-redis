@@ -1,5 +1,9 @@
 #include "redis_doom.h"
 #include "hu_stuff.h"
+#include "w_checksum.h"
+
+// Holds the generated hex ID for the WAD
+char doom_wad_id[41];
 
 redisContext *mainContext;
 
@@ -82,6 +86,7 @@ void CloseRedis(redisContext **c)
     printf("[Redis]: Closed Redis Connection\n");
 }
 
+// Player should be unique per Redis DB
 void AddPlayerToRedis(redisContext *c, const char *playerName)
 {
     redisReply *reply;
@@ -99,8 +104,15 @@ void AddPlayerToRedis(redisContext *c, const char *playerName)
     // Add new player name in the set
     reply = redisCommand(c,"SADD doom:players %s", playerName);
     FreeRedisReply(reply);
+
+    // Add player suggestion for autocomplete functionality in Player Search
+    reply = redisCommand(c,"FT.SUGADD doom:player-search %s 1", playerName);
+    FreeRedisReply(reply);
 }
 
+// A very simple way to ensure each player is unique by throwing error
+// if you put a playerName with another password
+// Obviously not a "serious" security measure but then again it's about playing Doom...
 void CheckPlayerPassword(redisContext *c, const char *playerName)
 {
     redisReply *reply;
@@ -115,6 +127,8 @@ void CheckPlayerPassword(redisContext *c, const char *playerName)
     }
 }
 
+// Sends the event that the user joined, which should be pushed in-game
+// to players as a PubSub notification from the backend
 void AnnouncePlayer(redisContext *c, const char *playerName)
 {
     redisReply *reply;
@@ -143,12 +157,40 @@ long long PlayerExistsInRedis(redisContext *c, const char* playerName)
     return exists;
 }
 
-void GetCurrentEpisodeMap(char* buffer, size_t size) {
+// Uses the Doom function W_Checksum that provides the sha1 digest
+// for the WAD data. Then we calculate a hex ID to use to uniquely identify
+// the WAD so that we don't rely on filenames only
+void CalculateWADHash(void) 
+{
+    sha1_digest_t digest;
+    W_Checksum(digest);
+
+    for (int i = 0; i < 20; ++i) {
+        sprintf(doom_wad_id + i * 2, "%02x", digest[i]);
+    }
+    doom_wad_id[40] = '\0';
+
+    printf("[WAD Hash] WAD ID: %s\n", doom_wad_id);
+}
+
+void SendWADHashToRedis(redisContext *c, const char *iwad_filename) 
+{
+    redisReply* reply;
+
+    CalculateWADHash();
+
+    reply = redisCommand(c, "HSETNX doom:wads:wad-names %s %s", doom_wad_id, iwad_filename);
+    FreeRedisReply(reply);
+}
+
+void GetCurrentEpisodeMap(char* buffer, size_t size) 
+{
     if (buffer == NULL || size == 0) return;
     snprintf(buffer, size, "E%dM%d", gameepisode, gamemap);
 }
 
-const char* GetMobjTypeName(int mobjType) {
+const char* GetMobjTypeName(int mobjType) 
+{
     switch (mobjType) {
         case MT_POSSESSED:     return "Former Human";
         case MT_SHOTGUY:       return "Shotgun Guy";
@@ -173,7 +215,8 @@ const char* GetMobjTypeName(int mobjType) {
     }
 }
 
-const char* GetWeaponName(int weaponEnum) {
+const char* GetWeaponName(int weaponEnum) 
+{
 
     const char* weaponName;
 
@@ -194,18 +237,20 @@ const char* GetWeaponName(int weaponEnum) {
 }
 
 
-void AddShotFiredToStream(redisContext *c, const char *playerName, int weaponEnum) {
+void AddShotFiredToStream(redisContext *c, const char *playerName, int weaponEnum) 
+{
     redisReply *reply;
 
     const char* weaponName = GetWeaponName(weaponEnum);
     char mapName[16];
     GetCurrentEpisodeMap(mapName, sizeof(mapName));
 
-    reply = redisCommand(c, "XADD doom:events * type shot playerName %s weaponName %s mapName %s", playerName, weaponName, mapName);
+    reply = redisCommand(c, "XADD doom:events * type shot playerName %s weaponName %s mapName %s wadId %s", playerName, weaponName, mapName, doom_wad_id);
     FreeRedisReply(reply);
 }
 
-void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, int targetEnum){
+void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, int targetEnum)
+{
 
     redisReply *reply;
 
@@ -214,11 +259,12 @@ void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, in
     GetCurrentEpisodeMap(mapName, sizeof(mapName));
     const char* targetName = GetMobjTypeName(targetEnum);
 
-    reply = redisCommand(c, "XADD doom:events * type kill playerName %s targetName %s weaponName %s mapName %s", playerName, targetName, weaponName, mapName);
+    reply = redisCommand(c, "XADD doom:events * type kill playerName %s targetName %s weaponName %s mapName %s wadId %s", playerName, targetName, weaponName, mapName, doom_wad_id);
     FreeRedisReply(reply);
 }
 
-void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerEnum, int playerX, int playerY){
+void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerEnum, int playerX, int playerY)
+{
 
     redisReply *reply;
 
@@ -230,11 +276,12 @@ void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerE
     int deathX = playerX >> 16;
     int deathY = playerY >> 16;
 
-    reply = redisCommand(c, "XADD doom:events * type death playerName %s targetName %s mapName %s x %d y %d", playerName, killerName, mapName, deathX, deathY);
+    reply = redisCommand(c, "XADD doom:events * type death playerName %s targetName %s mapName %s x %d y %d wadId %s", playerName, killerName, mapName, deathX, deathY, doom_wad_id);
     FreeRedisReply(reply);
 }
 
-void AddChatEvent(redisContext *c, const char *playerName, const char *message){
+void AddChatEvent(redisContext *c, const char *playerName, const char *message)
+{
 
     redisReply *reply;
 
@@ -249,7 +296,8 @@ void AddChatEvent(redisContext *c, const char *playerName, const char *message){
 *
  */
 
-void SetPubSubMessage(const char* incomingMessage) {
+void SetPubSubMessage(const char* incomingMessage) 
+{
     memset(redisNotificationBuffer, 0, sizeof(redisNotificationBuffer));
     strncpy(redisNotificationBuffer, incomingMessage, sizeof(redisNotificationBuffer));
     redisNotificationLen = strlen(redisNotificationBuffer);
@@ -257,7 +305,8 @@ void SetPubSubMessage(const char* incomingMessage) {
     DrawRedisNotification();
 }
 
-void* PubSubListenerThread(void *arg) {
+void* PubSubListenerThread(void *arg) 
+{
 
     const char *playerName = (const char*) arg;
     redisReply *reply;
@@ -293,11 +342,13 @@ void* PubSubListenerThread(void *arg) {
 
 }
 
-void StartPubSubListener(const char* playerName) {
+void StartPubSubListener(const char* playerName) 
+{
     pthread_create(&pubSubThread, NULL, PubSubListenerThread, (void*)playerName);
 }
 
-void StopPubSubListener() {
+void StopPubSubListener() 
+{
     redisNotificationThreadRunning = false;
     if (pubSubContext) {
         redisFree(pubSubContext);
