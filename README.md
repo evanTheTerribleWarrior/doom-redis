@@ -11,8 +11,6 @@ Play Doom with a live Web UI showing real-time game stats, leaderboards, chat an
 
 ![Image4](https://github.com/user-attachments/assets/46b5c25e-7c9a-4b7e-b0ab-e6fd31906a24)
 
-* * * * *
-
 Current Features
 --------
 
@@ -28,16 +26,12 @@ Current Features
 
 -   Data separation per Doom WAD and per Map
 
-* * * * *
-
 Work in Progress
 --------
 
 -   More cases of in-game notifications
 -   Looking for other cool ideas!
 -   Test/build on windows and Linux
-
-* * * * *
 
 Fixes
 --------
@@ -57,8 +51,6 @@ Project Structure
 └── .env.example       # Environment variables (Redis host, port, etc.)
 
 ```
-
-* * * * *
 
 Quick Start
 -----------
@@ -141,8 +133,6 @@ This will:
 
 -   Launch everything in proper order
 
-* * * * *
-
 Build manually (no script)
 -----------
 
@@ -216,8 +206,6 @@ cd game-code/build
 ./redis-doom -iwad ../WADs/freedoom1.wad -playerName DoomSlayer
 ```
 
-* * * * *
-
 Project Architecture
 --------------------
 
@@ -264,14 +252,10 @@ game-code/src/redis-doom.c
 
 +-----------------------------------------------------------+
 
-* * * * *
-
 Tests
 -------
 
 Currently tested on MacOS environment only
-
-* * * * *
 
 License
 -------
@@ -281,8 +265,6 @@ License
 -   This project adds new code under the **MIT License**.
 
 -   Game assets use [Freedoom](https://freedoom.github.io/) (BSD-like license).
-
-* * * * *
 
 Credits
 -------
@@ -294,8 +276,6 @@ Credits
 -   Hiredis: RedisLabs
 
 -   SDL2-Doom repo (https://github.com/AlexOberhofer/sdl2-doom)
-
-* * * * *
 
 Note
 -------
