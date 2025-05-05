@@ -168,9 +168,12 @@ def map_leaderboard():
 @app.route('/api/search_players')
 def search_players():
     query = request.args.get('q', '')
-    #suggestions = r.ft('doom:player-search').sugget('doom:player-search', query)
-    suggestions = r.execute_command("FT.SUGGET", "doom:player-search", query, "MAX", 10)
-    return jsonify([s.decode() if isinstance(s, bytes) else s for s in suggestions])
+    suggestions = r.ft().sugget(
+        key="doom:player-search",
+        prefix=query,
+    )
+    results = [s.string for s in suggestions]
+    return jsonify(results)
 
 @app.route('/api/player/<player_name>')
 def player_stats(player_name):
