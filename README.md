@@ -117,19 +117,11 @@ The script will load these variables both for the game code and the backend to r
 
 3.  **Run the project via single script**
 
-Currently you need to do the following minimum configuration to define the Player Name and WAD in the `build/start.sh` script. Replace with your own values as needed
+From the root directory run the script:
 
 ```
-# Configuration
-PLAYER_NAME="Doomslayer"
-WAD_NAME="freedoom1.wad"
-```
-
-And then to run everything at once run the script:
-
-```
-chmod +x start.sh
-./start.sh
+chmod +x build/start.sh
+./build/start.sh
 
 ```
 
