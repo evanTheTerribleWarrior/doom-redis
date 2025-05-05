@@ -61,18 +61,30 @@ def load_wadnames():
 def load_logs():
     entries = r.xrevrange('doom:events', count=100)
     logs = []
+
+    wad_name_cache = {}
+
     for _, data in reversed(entries):
         player = data.get(b'playerName', b'').decode()
         weapon = data.get(b'weaponName', b'unknown').decode()
         mapname = data.get(b'mapName', b'unknown').decode()
         type = data.get(b'type', b'unknown').decode()
         target = data.get(b'targetName', b'').decode()
+        wadId = data.get(b'wadId', b'').decode()
+
+        if wadId:
+            if wadId not in wad_name_cache:
+                wad_name = r.hget("doom:wads:wad-names", wadId)
+                wad_name_cache[wadId] = wad_name.decode() if wad_name else "unknown.wad"
+            wad_filename = wad_name_cache[wadId]
+        else:
+            wad_filename = "unknown.wad"
 
         log_msg = None
         if type == 'kill':
-            log_msg = f"Player {player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
+            log_msg = f"[{wad_filename}]: Player {player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
         elif type == 'death':
-            log_msg = f"Player {player} WAS KILLED by {target or 'something'} on {mapname}"
+            log_msg = f"[{wad_filename}]: Player {player} WAS KILLED by {target or 'something'} on {mapname}"
 
         if log_msg:
             logs.append(log_msg)
