@@ -123,7 +123,7 @@ def start_event_consumer(r, socketio):
                         wad_map_player = f'{WADS_KEY}:stats:{wadId}:maps:{mapname}:{player}'
 
                         if type == 'kill':
-                            log_msg = f"{player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
+                            log_msg = f"[{wad_filename}]: {player} killed {target or 'an enemy'} with a {weapon} on {mapname}"
 
                             r.incrby(f'{PLAYERS_KEY}:{player}:streak', 1)
                             streak = r.get(f'{PLAYERS_KEY}:{player}:streak')
@@ -136,7 +136,7 @@ def start_event_consumer(r, socketio):
                             pipe.hincrby(wad_map_player, 'totalKills', 1)
 
                         elif type == 'death':
-                            log_msg = f"{player} WAS KILLED by {target or 'something'}"
+                            log_msg = f"[{wad_filename}]: {player} WAS KILLED by {target or 'something'}"
                             pipe.hincrby(player_total, 'totalDeaths', 1)
                             pipe.hincrby(wad_player, 'totalDeaths', 1)
                             pipe.hincrby(wad_map_player, 'totalDeaths', 1)
