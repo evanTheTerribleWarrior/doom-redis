@@ -250,7 +250,6 @@ static void UpdateShiftStatus(int pressed, unsigned char key)
 
     if (lastRawKey == SDLK_LSHIFT || lastRawKey == SDLK_RSHIFT) {
       shiftdown += change;
-      printf("[ShiftStatus] Shift %s -> shiftdown: %d\n", pressed ? "down" : "up", shiftdown);
     }
 }
 

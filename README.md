@@ -42,7 +42,7 @@ Work in Progress
 Fixes
 --------
 
-- Currently working to fully fix the chat characters and what is actually printed
+TBC
 
 Project Structure
 -----------------
