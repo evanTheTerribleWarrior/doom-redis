@@ -108,7 +108,7 @@ SOUNDFONT_PATH="$ROOT_DIR/game-code/soundfont/$SOUNDFONT"
 export SDL_SOUNDFONTS="$SOUNDFONT_PATH"
 echo "[Sound] Using SoundFont at $SOUNDFONT_PATH"
 
-./redis-doom -iwad "$WAD_DIR/$WAD_NAME" -playerName "$PLAYER_NAME"
+./redis-doom -iwad "$WAD_DIR/$WAD_NAME" -playername "$PLAYER_NAME"
 
 DOOM_PID=$!
 

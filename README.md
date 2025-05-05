@@ -1,13 +1,15 @@
 DOOM Redis Edition
 ==================
 
-Play Doom with a live Web UI showing real-time game stats, leaderboards, and chat --- powered by Redis and WebSockets.
+Play Doom with a live Web UI showing real-time game stats, leaderboards, chat and in-game notifications for specific events like killing spree --- powered by Redis and WebSockets.
 
 ![Image](https://github.com/user-attachments/assets/a97bd1cf-cfb2-4185-b1fe-5703b738259c)
 
 ![Image2](https://github.com/user-attachments/assets/8c39c1fc-b4b9-4be4-b187-7f824ca6289e)
 
 ![Image3](https://github.com/user-attachments/assets/d84a7394-d423-455c-9c83-ddd04bb44ba3)
+
+![Image4](https://github.com/user-attachments/assets/46b5c25e-7c9a-4b7e-b0ab-e6fd31906a24)
 
 * * * * *
 
