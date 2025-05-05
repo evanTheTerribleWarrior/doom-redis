@@ -103,7 +103,9 @@ export default function GameStats() {
 
   return (
     <Container maxWidth="lg" sx={{ borderRadius: 2, p: 3 }}>
-      <WADSelector selectedWAD={selectedWad} onChange={setSelectedWad} wadOptions={wadOptions} />
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <WADSelector selectedWAD={selectedWad} onChange={setSelectedWad} wadOptions={wadOptions} />
+      </Box>
       <StatsTabs />
       <Routes>
         <Route path="/" element={<Navigate to="/stats/leaderboard" replace />} />
