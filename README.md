@@ -11,6 +11,8 @@ Play Doom with a live Web UI showing real-time game stats, leaderboards, chat an
 
 ![Image4](https://github.com/user-attachments/assets/46b5c25e-7c9a-4b7e-b0ab-e6fd31906a24)
 
+![Image5](https://github.com/user-attachments/assets/31790c3f-e83a-49e5-bbf5-404c2276cb47)
+
 Current Features
 --------
 
@@ -25,6 +27,8 @@ Current Features
 -   Player Search (Redis Autocomplete - FT.SUGGET)
 
 -   Data separation per Doom WAD and per Map
+
+-   Using Redis pipeline to execute operations more efficiently
 
 Work in Progress
 --------

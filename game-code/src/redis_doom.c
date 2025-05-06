@@ -108,6 +108,10 @@ void AddPlayerToRedis(redisContext *c, const char *playerName)
     // Add player suggestion for autocomplete functionality in Player Search
     reply = redisCommand(c,"FT.SUGADD doom:player-search %s 1", playerName);
     FreeRedisReply(reply);
+
+     // Add player in Timeseries to track metrics like efficiency
+    reply = redisCommand(c,"TS.CREATE doom:wads:stats:%s:timeseries:%s:efficiency LABELS player %s RETENTION 2678400000", doom_wad_id, playerName, playerName);
+    FreeRedisReply(reply);
 }
 
 // A very simple way to ensure each player is unique by throwing error
@@ -176,8 +180,6 @@ void CalculateWADHash(void)
 void SendWADHashToRedis(redisContext *c, const char *iwad_filename) 
 {
     redisReply* reply;
-
-    CalculateWADHash();
 
     reply = redisCommand(c, "HSETNX doom:wads:wad-names %s %s", doom_wad_id, iwad_filename);
     FreeRedisReply(reply);

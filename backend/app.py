@@ -6,6 +6,7 @@ from flask_cors import CORS
 import redis
 import os
 from flask import request
+import time
 
 
 from dotenv import load_dotenv
@@ -177,6 +178,15 @@ def map_leaderboard():
     return jsonify(list(map_stats.values()))
 
 
+# Gives a full list of player names based on the Redis Set
+# Useful for PerformanceTracker component and anywhere else it might be needed
+@app.route('/api/players')
+def get_players():
+    players = r.smembers('doom:players')
+    player_names = [p.decode() if isinstance(p, bytes) else p for p in players]
+    return jsonify(player_names)
+
+# Searches the players based on what the user is typing
 @app.route('/api/search_players')
 def search_players():
     query = request.args.get('q', '')
@@ -187,6 +197,7 @@ def search_players():
     results = [s.string for s in suggestions]
     return jsonify(results)
 
+# Get stats per user. Useful for PlayerSearch
 @app.route('/api/player/<player_name>')
 def player_stats(player_name):
     stats_key = f'doom:players:{player_name}:total-stats'
@@ -215,8 +226,34 @@ def player_stats(player_name):
         'preferredWeapon': preferred_weapon
     })
 
+# Provides the timeseries value for the player. The range can be changed
+# depending how long back we want to look
+@app.route('/api/player/<player_name>/efficiency_timeseries')
+def player_timeseries(player_name):
 
+    wadID = request.args.get('wadId')
+    if not wadID:
+        return jsonify({'error': 'Missing wadId'}), 400
 
+    key = f'doom:wads:stats:{wadID}:timeseries:{player_name}:efficiency'
+    print(key)
+    try:
+        now = int(time.time() * 1000)
+        one_week_ago = now - (7 * 24 * 60 * 60 * 1000)
+        points = r.ts().range(key, from_time=one_week_ago, to_time=now)
+
+        result = [
+            {
+                "timestamp": time.strftime('%Y-%m-%d %H:%M', time.localtime(int(ts) / 1000)),
+                "efficiency": float(val)
+            }
+            for ts, val in points
+        ]
+
+        return jsonify(result)
+    except Exception as e:
+        print(f"[Error] TS.RANGE for {player_name}: {e}")
+        return jsonify([]), 500
 
 if __name__ == '__main__':
     create_consumer_groups(r) 

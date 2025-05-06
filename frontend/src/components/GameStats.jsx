@@ -3,6 +3,7 @@ import { Tabs, Tab, Box, Select, MenuItem, InputLabel, FormControl, Container } 
 import { Link, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import Leaderboard from './Leaderboard';
 import MapDominators from './MapDominators';
+import PerformanceTracker from './PerformanceTracker';
 
 function WADSelector({ selectedWAD, onChange, wadOptions }) {
     return (
@@ -65,6 +66,9 @@ function StatsTabs() {
       case '/stats/map-dominators':
         setValue(1);
         break;
+      case '/stats/performance':
+        setValue(2);
+        break;
       default:
         setValue(0);
         break;
@@ -81,6 +85,7 @@ function StatsTabs() {
       >
         <Tab label="Leaderboard" component={Link} to="/stats/leaderboard" />
         <Tab label="Map Dominators" component={Link} to="/stats/map-dominators" />
+        <Tab label="Performance" component={Link} to="/stats/performance" />
       </Tabs>
     </Box>
   );
@@ -111,6 +116,7 @@ export default function GameStats() {
         <Route path="/" element={<Navigate to="/stats/leaderboard" replace />} />
         <Route path="/leaderboard" element={<Leaderboard selectedWAD={selectedWad} />} />
         <Route path="/map-dominators" element={<MapDominators selectedWAD={selectedWad} />} />
+        <Route path="/performance" element={<PerformanceTracker selectedWAD={selectedWad}   />} />
       </Routes>
     </Container>
   );

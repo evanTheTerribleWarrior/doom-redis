@@ -1846,6 +1846,18 @@ void D_DoomMain (void)
 	InitRedis(&mainContext);
 	StartPubSubListener(players[consoleplayer].playerName);
 
+    // Check the WAD name, keep only the filename and not the full path
+    p = M_CheckParm("-iwad");
+    const char *iwad_fullpath = myargv[p + 1];
+
+    const char *iwad_filename = strrchr(iwad_fullpath, '/');
+    if (iwad_filename != NULL) {
+        iwad_filename++;
+    } else {
+        iwad_filename = iwad_fullpath;
+    }
+    CalculateWADHash();
+
     // Auth logic
     // 1. Check if player name exists in this Redis DB
     // 2. If it does, check the password. Throw error if password doesnt match
@@ -1858,17 +1870,7 @@ void D_DoomMain (void)
         CheckPlayerPassword(mainContext, players[consoleplayer].playerName);
     }
 
-    // Check the WAD name, keep only the filename and not the full path
-    p = M_CheckParm("-iwad");
-    const char *iwad_fullpath = myargv[p + 1];
-
-    const char *iwad_filename = strrchr(iwad_fullpath, '/');
-    if (iwad_filename != NULL) {
-        iwad_filename++;
-    } else {
-        iwad_filename = iwad_fullpath;
-    }
-
+    
     SendWADHashToRedis(mainContext, iwad_filename);
     AnnouncePlayer(mainContext, players[consoleplayer].playerName);
 

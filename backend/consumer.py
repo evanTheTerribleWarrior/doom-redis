@@ -154,15 +154,19 @@ def start_event_consumer(r, socketio):
                         shots = int(r.hget(wad_player, 'totalShots') or 0)
                         efficiency = round(kills / shots, 4) if shots > 0 else 0.0
 
+                        # Add values for leaderboard and timeseries
                         pipe.zadd(f'{WADS_KEY}:stats:{wadId}:leaderboard:scores', {player: kills})
                         pipe.zadd(f'{WADS_KEY}:stats:{wadId}:leaderboard:efficiency', {player: efficiency})
-
+                        pipe.ts().add(f'{WADS_KEY}:stats:{wadId}:timeseries:{player}:efficiency', '*', efficiency)
+                        
                         # Track all players for this WAD
                         pipe.sadd(f'{WADS_KEY}:stats:{wadId}:players', player)
 
                         socketio.emit('leaderboard:update', {"wadId": wadId})
                         if log_msg:
                             socketio.emit('gamelog:update', {"log_msg": log_msg})
+                        
+                        socketio.emit('efficiency:update', { "player": player, "wadId": wadId })
 
                         pipe.execute()
                         r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
