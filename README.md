@@ -16,7 +16,7 @@ Play Doom with a live Web UI showing real-time game stats, leaderboards, chat an
 Current Features
 --------
 
--   Live player chat feed (Redis Streams)
+-   Live player chat feed (Redis Streams), enabled by pressing "c"
 
 -   Live game event log feed (Redis Streams)
 
