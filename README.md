@@ -146,11 +146,15 @@ If you wish to run everything individually you should:
 
 ###  **Compile the Doom game**
 ```
-cd game-code/build
+cd game-code
+mkdir build
 cmake ..
 make
 ```
 This will generate the `redis-doom` binary inside `game-code/build`
+
+Note: If you want to re-build everything, you need to delete all the files/folders under
+the `game-code/build` directory and then run again cmake + make as per above
 
 ###  **Setup the backend**
 ```
@@ -257,6 +261,92 @@ game-code/src/redis-doom.c
 |        Live Chat | Game Logs | Player Leaderboard         |
 
 +-----------------------------------------------------------+
+
+Implementation Details
+--------------------
+
+Below are some examples of how currently some features are implemented (May 2025).
+
+## Live Chat
+
+In the Doom C code, several additions have been made in the main built-in functions used for generating text lines on the screen. Here is an example from `hu_stuff.c`
+```
+// If we are in Redis chat mode, we clear the line
+    // and then add > as the start of the chat line
+    // Finally we receive the input as player types
+    if (redischatmode) {
+        HUlib_clearTextLine(&w_redischatinput);
+        HUlib_addCharToTextLine(&w_redischatinput, '>');
+        HUlib_addCharToTextLine(&w_redischatinput, ' ');
+        for (int i = 0; i < redischatlen; ++i)
+            HUlib_addCharToTextLine(&w_redischatinput, redischatbuffer[i]);
+    }
+```
+
+The "chat mode" gets enabled when pressing "c" on the keyboard. 
+At that point a text line is initiated that starts with ">" and then we
+read the characters the users presses into a buffer and then into the text line
+
+Chat messages are sent as events in the backend, as per `redis_doom.c`:
+```
+void AddChatEvent(redisContext *c, const char *playerName, const char *message)
+{
+    redisReply *reply;
+
+    reply = redisCommand(c, "XADD doom:chat * playerName %s message %s", playerName, message);
+    FreeRedisReply(reply);
+}
+```
+
+Then these messages are picked up by the backend (`backend/consumer.py`)
+```
+def start_chat_consumer(r, socketio):
+```
+
+and are send via websocket to the frontend
+
+## WAD ID generation
+
+This is an important part in order to be able to create per-WAD separation of the various data.
+
+So this takes advantage of an existing Doom function `W_Checksum` that basically creates a hash of all the data/lumps of a WAD.
+
+So the following function outputs a hex representation of that to generate ultimately a unique string per WAD, so we don't rely on filenames as those can be easily changed from a user
+```
+void CalculateWADHash(void) 
+{
+    sha1_digest_t digest;
+    W_Checksum(digest);
+
+    for (int i = 0; i < 20; ++i) {
+        sprintf(doom_wad_id + i * 2, "%02x", digest[i]);
+    }
+    doom_wad_id[40] = '\0';
+
+    printf("[WAD Hash] WAD ID: %s\n", doom_wad_id);
+}
+```
+
+Then this is sent via all events as needed to the backend, for example:
+```
+reply = redisCommand(c, "XADD doom:events * type kill playerName %s targetName %s weaponName %s mapName %s wadId %s", playerName, targetName, weaponName, mapName, doom_wad_id);
+```
+
+A hash is maintained as `doom:wads:wad-names` that is a basic way of maintaining a pair of
+wadID - filename. 
+```
+void SendWADHashToRedis(redisContext *c, const char *iwad_filename) 
+{
+    redisReply* reply;
+
+    reply = redisCommand(c, "HSETNX doom:wads:wad-names %s %s", doom_wad_id, iwad_filename);
+    FreeRedisReply(reply);
+}
+```
+
+It's not bulletproof but good enough for this sample repo in order to render the right filename in the frontend
+
+More implementation details will be added
 
 Tests
 -------

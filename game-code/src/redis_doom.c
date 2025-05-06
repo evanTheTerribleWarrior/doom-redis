@@ -284,11 +284,9 @@ void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerE
 
 void AddChatEvent(redisContext *c, const char *playerName, const char *message)
 {
-
     redisReply *reply;
 
     reply = redisCommand(c, "XADD doom:chat * playerName %s message %s", playerName, message);
-
     FreeRedisReply(reply);
 }
 
