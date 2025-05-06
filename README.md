@@ -267,7 +267,7 @@ Implementation Details
 
 Below are some examples of how currently some features are implemented (May 2025).
 
-## Live Chat
+### Live Chat
 
 In the Doom C code, several additions have been made in the main built-in functions used for generating text lines on the screen. Here is an example from `hu_stuff.c`
 ```
@@ -305,7 +305,7 @@ def start_chat_consumer(r, socketio):
 
 and are send via websocket to the frontend
 
-## WAD ID generation
+### WAD ID generation
 
 This is an important part in order to be able to create per-WAD separation of the various data.
 
