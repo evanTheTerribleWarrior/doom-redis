@@ -26,6 +26,8 @@ Current Features
 
 -   Player Search (Redis Autocomplete - FT.SUGGET)
 
+-   Player Performance over time (Redis Timeseries)
+
 -   Data separation per Doom WAD and per Map
 
 -   Using Redis pipeline to execute operations more efficiently
