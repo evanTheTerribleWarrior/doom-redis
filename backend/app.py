@@ -149,7 +149,7 @@ def map_leaderboard():
     wadID = request.args.get('wadId')
     if not wadID:
         return jsonify({'error': 'Missing wadId'}), 400
-
+    
     map_stats = {}
     prefix = f'doom:wads:stats:{wadID}:maps:'
 
@@ -257,6 +257,7 @@ def player_timeseries(player_name):
 
 if __name__ == '__main__':
     create_consumer_groups(r) 
-    socketio.start_background_task(start_event_consumer, r, socketio)
+    enable_vectors = os.getenv("ENABLE_VECTOR", "0") == "1"
+    socketio.start_background_task(start_event_consumer, r, socketio, enable_vectors)
     socketio.start_background_task(start_chat_consumer, r, socketio)
     socketio.run(app, allow_unsafe_werkzeug=True)

@@ -685,7 +685,7 @@ P_KillMobj
 	if (target->flags & MF_COUNTKILL){
 		source->player->killcount++;
 		// Redis
-		AddKillToStream(mainContext, source->player->playerName, source->player->readyweapon, target->type);
+		AddKillToStream(mainContext, source->player->playerName, source->player->readyweapon, target->type, source->player->mo->x, source->player->mo->y);
 	}
 	    	
 

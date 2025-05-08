@@ -251,7 +251,7 @@ void AddShotFiredToStream(redisContext *c, const char *playerName, int weaponEnu
     FreeRedisReply(reply);
 }
 
-void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, int targetEnum)
+void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, int targetEnum, int playerX, int playerY)
 {
 
     redisReply *reply;
@@ -261,7 +261,11 @@ void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, in
     GetCurrentEpisodeMap(mapName, sizeof(mapName));
     const char* targetName = GetMobjTypeName(targetEnum);
 
-    reply = redisCommand(c, "XADD doom:events * type kill playerName %s targetName %s weaponName %s mapName %s wadId %s", playerName, targetName, weaponName, mapName, doom_wad_id);
+    // Get only the integer part of the Doom map units
+    int posX = playerX >> 16;
+    int posY = playerY >> 16;
+
+    reply = redisCommand(c, "XADD doom:events * type kill playerName %s targetName %s weaponName %s mapName %s posX %d posY %d  wadId %s", playerName, targetName, weaponName, mapName, posX, posY, doom_wad_id);
     FreeRedisReply(reply);
 }
 
@@ -278,7 +282,7 @@ void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerE
     int deathX = playerX >> 16;
     int deathY = playerY >> 16;
 
-    reply = redisCommand(c, "XADD doom:events * type death playerName %s targetName %s mapName %s x %d y %d wadId %s", playerName, killerName, mapName, deathX, deathY, doom_wad_id);
+    reply = redisCommand(c, "XADD doom:events * type death playerName %s targetName %s mapName %s posX %d posY %d wadId %s", playerName, killerName, mapName, deathX, deathY, doom_wad_id);
     FreeRedisReply(reply);
 }
 
@@ -287,6 +291,18 @@ void AddChatEvent(redisContext *c, const char *playerName, const char *message)
     redisReply *reply;
 
     reply = redisCommand(c, "XADD doom:chat * playerName %s message %s", playerName, message);
+    FreeRedisReply(reply);
+}
+
+void SendPlayerMovement(redisContext *c, const char *playerName, int weaponEnum, int posX, int posY)
+{
+    redisReply *reply;
+
+    const char* weaponName = GetWeaponName(weaponEnum);
+    char mapName[16];
+    GetCurrentEpisodeMap(mapName, sizeof(mapName));
+
+    reply = redisCommand(c, "XADD doom:events * type movement playerName %s weaponName %s mapName %s posX %d posY %d  wadId %s", playerName, weaponName, mapName, posX, posY, doom_wad_id);
     FreeRedisReply(reply);
 }
 

@@ -27,7 +27,7 @@
 #include "p_local.h"
 
 #include "doomstat.h"
-
+#include "redis_doom.h"
 
 
 // Index of the special effects (INVUL inverse) map.
@@ -253,6 +253,34 @@ void P_PlayerThink (player_t* player)
 	P_DeathThink (player);
 	return;
     }
+
+
+	static fixed_t last_x[MAXPLAYERS];
+    static fixed_t last_y[MAXPLAYERS];
+    static int tick_counter[MAXPLAYERS];
+
+    int pnum = player - players;
+    tick_counter[pnum]++;
+
+    if (tick_counter[pnum] >= 35) {
+        tick_counter[pnum] = 0;
+
+        fixed_t x = player->mo->x;
+        fixed_t y = player->mo->y;
+
+        if (abs(x - last_x[pnum]) > (32 << FRACBITS) ||
+            abs(y - last_y[pnum]) > (32 << FRACBITS)) {
+            
+            last_x[pnum] = x;
+            last_y[pnum] = y;
+
+            int px = x >> FRACBITS;
+            int py = y >> FRACBITS;
+
+            SendPlayerMovement(mainContext, player->playerName, player->readyweapon, px, py);
+        }
+    }
+
     
     // Move around.
     // Reactiontime is used to prevent movement

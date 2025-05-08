@@ -1,5 +1,12 @@
 import redis
 import time
+import numpy as np
+import uuid
+import os
+from redis.commands.search.field import TagField, VectorField, TextField
+from redis.commands.search.index_definition import IndexDefinition, IndexType
+from redis.commands.search.query import Query
+
 
 # General players key
 PLAYERS_KEY = 'doom:players'
@@ -19,6 +26,11 @@ CHAT_CONSUMER = 'doom_chat_consumer'
 
 # Broadcast / PubSub
 BROADCAST_CHANNEL = 'doom:players:broadcast'
+
+# Vector Search indexes
+SPREE_INDEX_NAME = f"doom:ai:vectors:sprees:idx"
+SPREE_DOC_PREFIX = f"doom:ai:vectors:sprees:"
+NOTIFICATION_EXPIRY = 10
 
 # Checks if value is string or bytes and decodes accordingly
 def safe_decode(value):
@@ -61,6 +73,43 @@ def check_kill_spree(player, streak):
         return f"{player} {streak} kill spree: {status}"  
     else:
         return None  
+    
+# Mapping for killing spree, used to search if players had sprees
+# in the area that player is currently in using similarity search
+def get_vector_mapping(player, weapon, mapname, wadId, posX, posY):
+
+    vec = np.array([posX, posY], dtype=np.float32).tobytes()
+
+    return {
+        'weapon': weapon,
+        'player': player,
+        'wadId': wadId,
+        'mapname': mapname,
+        'vector': vec
+    }
+
+def create_vss_index_spree(r):
+                                
+    try:
+        r.ft(SPREE_INDEX_NAME).info()
+        print(f"Index with name {SPREE_INDEX_NAME} already exists! Not creating again")
+    except:
+        schema = (
+            TagField("wadId"), 
+            TextField("weapon"),
+            TextField("player"),  
+            TextField("mapname"),                 
+            VectorField("vector",               
+                "FLAT", {                          
+                    "TYPE": "FLOAT32",             
+                    "DIM": 2,     
+                    "DISTANCE_METRIC": "COSINE",
+                }
+            ),
+        )
+
+        definition = IndexDefinition(prefix=[SPREE_DOC_PREFIX], index_type=IndexType.HASH)
+        r.ft(SPREE_INDEX_NAME).create_index(fields=schema, definition=definition)
 
 # Creating all consumer groups as needed
 def create_consumer_groups(r):
@@ -75,8 +124,12 @@ def create_consumer_groups(r):
                 raise
 
 # The main consumer for all event types like kills, shots etc
-def start_event_consumer(r, socketio):
+def start_event_consumer(r, socketio, enable_vectors):
     print("[Consumer] Starting Event Consumer...")
+
+    # We create any indexes we need regardless of user enabling vector search
+    # If index exists, nothing gets created
+    create_vss_index_spree(r)
 
     while True:
         try:
@@ -114,6 +167,26 @@ def start_event_consumer(r, socketio):
                             r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
                             continue
 
+                        if enable_vectors:
+                            if type == 'movement': 
+                                posX = safe_decode(data.get(b'posX', b''))
+                                posY = safe_decode(data.get(b'posY', b''))
+                                notification_key = f"doom:ai:notification:sent:{player}"
+
+                                if not r.exists(notification_key):
+                                    query_vec = np.array([float(posX), float(posY)], dtype=np.float32).tobytes()
+                                    res = r.ft(SPREE_INDEX_NAME).search(
+                                        Query("*=>[KNN 1 @vector $vec]").paging(0, 1).return_fields("weapon", "player", "wadId", "mapname", "vector").dialect(2),
+                                        {"vec": query_vec}
+                                    )
+                                    if res.total > 0:
+                                        match = res.docs[0]
+                                        if match.player != player:
+                                            if(match.wadId == wadId and match.mapname == mapname):
+                                                r.publish(f"doom:player:{player}", f"Recommended Weapon here: {match.weapon}")
+                                                r.set(notification_key, value="1",ex=NOTIFICATION_EXPIRY)
+
+
                         log_msg = None
                         pipe = r.pipeline()
 
@@ -129,6 +202,12 @@ def start_event_consumer(r, socketio):
                             streak = r.get(f'{PLAYERS_KEY}:{player}:streak')
                             kill_spree = check_kill_spree(player, streak)
                             if kill_spree is not None:
+                                posX = safe_decode(data.get(b'posX', b''))
+                                posY = safe_decode(data.get(b'posY', b''))
+                                vector_mapping = get_vector_mapping(player, weapon, mapname, wadId, float(posX), float(posY))
+                                spree_id = str(uuid.uuid4())
+                                key = f'doom:ai:vectors:sprees:{spree_id}'
+                                pipe.hset(key, mapping = vector_mapping)
                                 pipe.publish(BROADCAST_CHANNEL, kill_spree)
 
                             pipe.hincrby(player_total, 'totalKills', 1)

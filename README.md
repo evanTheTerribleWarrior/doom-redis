@@ -28,6 +28,8 @@ Current Features
 
 -   Player Performance over time (Redis Timeseries)
 
+-   WORK IN PROGRESS: Vector Search for various cases (e.g. notify player for optimal weapon in a certain region)
+
 -   Data separation per Doom WAD and per Map
 
 -   Using Redis pipeline to execute operations more efficiently
@@ -104,6 +106,7 @@ SOUNDFONT=gzdoom.sf2
 PLAYER_PASSWORD=default
 PLAYER_NAME=
 WAD_NAME=
+ENABLE_VECTOR=1
 
 ```
 
@@ -115,7 +118,10 @@ The `.env.example` file comes with a default `PLAYER_PASSWORD`. Add your own. Th
 
 Obviously this is a free repo with intention to have fun with a common Redis server, so it does not come with security-first principles!
 
-Note the `SOUNDFONT` variable. This will allow you to load a soundfont file to be used for music in the game. If you don't want sound leave this empty
+`SOUNDFONT`: This will allow you to load a soundfont file to be used for music in the game. If you don't want sound leave this empty
+
+`ENABLE_VECTOR`: Whether it should enable notifications related to Vector Searches. For example,
+a player might be notified if another player had a killing spree using a specific weapon at a point in the map
 
 The script will load these variables both for the game code and the backend to read
 
@@ -345,6 +351,41 @@ void SendWADHashToRedis(redisContext *c, const char *iwad_filename)
 ```
 
 It's not bulletproof but good enough for this sample repo in order to render the right filename in the frontend
+
+### Vector Search
+
+The repo has logic to create baseline for vector searches for multiple use cases.
+
+As of writing these lines, the use cases used as testing ground is about notifying the current player if in a location nearby we can recommend a good weapon based on killing sprees of previous players.
+
+The sequence is as follows:
+- Create vector search index only once in `consumer.py` to be used for future searches
+- When a player performs a spree, we add the spree as a hash with a vector mapping
+```
+if kill_spree is not None:
+    posX = safe_decode(data.get(b'posX', b''))
+    posY = safe_decode(data.get(b'posY', b''))
+    vector_mapping = get_vector_mapping(player, weapon, mapname, wadId, float(posX), float(posY))
+    spree_id = str(uuid.uuid4())
+    key = f'doom:ai:vectors:sprees:{spree_id}'
+    pipe.hset(key, mapping = vector_mapping)
+    pipe.publish(BROADCAST_CHANNEL, kill_spree)
+```
+
+We include the current position of the player that we got from the C code (`AddKillToStream` function)
+
+- Then as the player moves through the level we perform KNN vector search every X seconds to see if 
+we get a hit in terms of other player sprees
+
+- If we find, we send notification about the recommended  weapon 
+```
+if match.player != player:
+    if(match.wadId == wadId and match.mapname == mapname):
+        r.publish(f"doom:player:{player}", f"Recommended Weapon here: {match.weapon}")
+        r.set(notification_key, value="1",ex=NOTIFICATION_EXPIRY)
+```
+We set NOTIFICATION_EXPIRY for the seconds that we want to wait until we expire the notification so that we don't overwhelm the player with notifications for every bit that they move
+
 
 More implementation details will be added
 
