@@ -61,6 +61,20 @@ wait_for_port() {
 
 echo "[Step 1] Building the game..."
 
+# Step 0: Install hiredis locally
+HIREDIS_DIR="$ROOT_DIR/deps/hiredis"
+
+if [ ! -f "$HIREDIS_DIR/libhiredis.a" ]; then
+  echo "[Deps] Cloning and building hiredis..."
+  mkdir -p "$ROOT_DIR/deps"
+  git clone https://github.com/redis/hiredis.git "$HIREDIS_DIR"
+  cd "$HIREDIS_DIR"
+  make -j$(nproc)
+  cd "$ROOT_DIR"
+else
+  echo "[Deps] hiredis already built at $HIREDIS_DIR"
+fi
+
 if [ ! -d "$GAME_BUILD_DIR" ]; then
   echo "[Init] Creating missing build directory: $GAME_BUILD_DIR"
   mkdir -p "$GAME_BUILD_DIR"
