@@ -14,6 +14,20 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 find_package(SDL2 REQUIRED)
 find_package(SDL2_mixer REQUIRED)
 
+# Try to find system-installed hiredis first
+find_path(HIREDIS_INCLUDE_DIR hiredis/hiredis.h)
+find_library(HIREDIS_LIBRARY hiredis)
+
+if (HIREDIS_INCLUDE_DIR AND HIREDIS_LIBRARY)
+    message(STATUS "Using system hiredis")
+    include_directories(${HIREDIS_INCLUDE_DIR})
+else()
+    message(STATUS "Using local hiredis from external/hiredis")
+    set(HIREDIS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/hiredis/include)
+    set(HIREDIS_LIBRARY ${CMAKE_SOURCE_DIR}/external/hiredis/lib/libhiredis.a)
+    include_directories(${HIREDIS_INCLUDE_DIR})
+endif()
+
 add_definitions(-Wall -D_REENTRANT -D_THREAD_SAFE)
 
 add_executable(redis-doom src/i_main.c src/dummy.c src/am_map.c src/doomdef.c src/doomstat.c src/dstrings.c src/d_event.c
@@ -30,7 +44,8 @@ add_executable(redis-doom src/i_main.c src/dummy.c src/am_map.c src/doomdef.c sr
  target_link_libraries(redis-doom PRIVATE
  ${SDL2_LIBRARIES}
  ${SDL2_MIXER_LIBRARIES}
- ${CMAKE_CURRENT_SOURCE_DIR}/external/hiredis/lib/libhiredis.a
+ ${HIREDIS_LIBRARY}
+ pthread
 )
 
 target_include_directories(redis-doom PRIVATE external/hiredis/include)

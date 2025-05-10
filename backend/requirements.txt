@@ -4,3 +4,4 @@ redis
 eventlet
 flask-cors
 dotenv
+numpy
