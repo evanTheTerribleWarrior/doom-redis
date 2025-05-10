@@ -3,7 +3,9 @@
 set -e  # Stop immediately if any command fails
 
 # Load .env file into environment
-export $(grep -v '^#' .env | xargs)
+set -o allexport
+source ../.env
+set +o allexport
 
 ROOT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
 BUILD_DIR="$ROOT_DIR/build"
