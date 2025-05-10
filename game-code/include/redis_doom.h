@@ -1,7 +1,7 @@
 #ifndef REDIS_DOOM_H
 #define REDIS_DOOM_H
 
-#include <hiredis/hiredis.h>
+#include "hiredis.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

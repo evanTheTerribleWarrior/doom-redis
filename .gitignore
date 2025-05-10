@@ -35,6 +35,9 @@ frontend/.env.local
 dump.rdb
 *.rdb
 
+# Hiredis build
+deps/
+
 # macOS metadata
 .DS_Store
 
