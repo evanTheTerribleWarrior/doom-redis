@@ -1,0 +1,56 @@
+
+services:
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - ENABLE_VECTOR=${ENABLE_VECTOR}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  game:
+    build: ./game-code
+    volumes:
+      - ./game-code:/app
+    env_file:
+      - .env
+    working_dir: /app/build
+    command: >
+      ./redis-doom
+      -iwad /app/WADs/${WAD_NAME}
+      -playername ${PLAYER_NAME}
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SOUNDFONT=${SOUNDFONT}
+      - ENABLE_VECTOR=${ENABLE_VECTOR}
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+      - redis
+

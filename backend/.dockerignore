@@ -1,0 +1,11 @@
+# Python artifacts
+venv
+__pycache__/
+*.py[cod]
+*.log
+*.sqlite3
+
+# OS and editor stuff
+.DS_Store
+.env
+*.swp

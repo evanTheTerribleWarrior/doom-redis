@@ -247,7 +247,7 @@ void AddShotFiredToStream(redisContext *c, const char *playerName, int weaponEnu
     char mapName[16];
     GetCurrentEpisodeMap(mapName, sizeof(mapName));
 
-    reply = redisCommand(c, "XADD doom:events * type shot playerName %s weaponName %s mapName %s wadId %s", playerName, weaponName, mapName, doom_wad_id);
+    reply = redisCommand(c, "XADD doom:events MAXLEN ~ 5000 * type shot playerName %s weaponName %s mapName %s wadId %s", playerName, weaponName, mapName, doom_wad_id);
     FreeRedisReply(reply);
 }
 
@@ -256,6 +256,7 @@ void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, in
 
     redisReply *reply;
 
+    
     const char* weaponName = GetWeaponName(weaponEnum);
     char mapName[16];
     GetCurrentEpisodeMap(mapName, sizeof(mapName));
@@ -265,7 +266,7 @@ void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, in
     int posX = playerX >> 16;
     int posY = playerY >> 16;
 
-    reply = redisCommand(c, "XADD doom:events * type kill playerName %s targetName %s weaponName %s mapName %s posX %d posY %d  wadId %s", playerName, targetName, weaponName, mapName, posX, posY, doom_wad_id);
+    reply = redisCommand(c, "XADD doom:events MAXLEN ~ 5000 * type kill playerName %s targetName %s weaponName %s mapName %s posX %d posY %d  wadId %s", playerName, targetName, weaponName, mapName, posX, posY, doom_wad_id);
     FreeRedisReply(reply);
 }
 
@@ -282,7 +283,7 @@ void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerE
     int deathX = playerX >> 16;
     int deathY = playerY >> 16;
 
-    reply = redisCommand(c, "XADD doom:events * type death playerName %s targetName %s mapName %s posX %d posY %d wadId %s", playerName, killerName, mapName, deathX, deathY, doom_wad_id);
+    reply = redisCommand(c, "XADD doom:events MAXLEN ~ 5000 * type death playerName %s targetName %s mapName %s posX %d posY %d wadId %s", playerName, killerName, mapName, deathX, deathY, doom_wad_id);
     FreeRedisReply(reply);
 }
 
@@ -290,7 +291,7 @@ void AddChatEvent(redisContext *c, const char *playerName, const char *message)
 {
     redisReply *reply;
 
-    reply = redisCommand(c, "XADD doom:chat * playerName %s message %s", playerName, message);
+    reply = redisCommand(c, "XADD doom:chat MAXLEN ~ 100 * playerName %s message %s", playerName, message);
     FreeRedisReply(reply);
 }
 
@@ -302,7 +303,7 @@ void SendPlayerMovement(redisContext *c, const char *playerName, int weaponEnum,
     char mapName[16];
     GetCurrentEpisodeMap(mapName, sizeof(mapName));
 
-    reply = redisCommand(c, "XADD doom:events * type movement playerName %s weaponName %s mapName %s posX %d posY %d  wadId %s", playerName, weaponName, mapName, posX, posY, doom_wad_id);
+    reply = redisCommand(c, "XADD doom:events MAXLEN ~ 5000 * type movement playerName %s weaponName %s mapName %s posX %d posY %d  wadId %s", playerName, weaponName, mapName, posX, posY, doom_wad_id);
     FreeRedisReply(reply);
 }
 

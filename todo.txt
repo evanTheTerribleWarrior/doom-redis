@@ -1,2 +1,7 @@
-- Complete MyStats component
-- Decide on per-WAD stat structure for leaderboard and per-player structure
+Spawn enemy
+#include "p_local.h"
+#include "p_mobj.h"
+
+fixed_t x = playerX  + 64*FRACUNIT;
+    fixed_t y = playerY + 64*FRACUNIT ;
+    mobj_t* new_enemy = P_SpawnMobj(x, y, ONFLOORZ, MT_SKULL);
