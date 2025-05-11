@@ -205,8 +205,7 @@ PLAYER_NAME=
 WAD_NAME=
 ```
 
-You need to export at least the `PLAYER_PASSWORD` if you change it
-e.g.
+You need to export at least the `PLAYER_PASSWORD`:
 ```
 export PLAYER_PASSWORD=TestPassword
 ```
@@ -410,7 +409,7 @@ Credits
 
 -   Freedoom assets: Freedoom Project
 
--   Hiredis: RedisLabs
+-   Hiredis: Redis
 
 -   SDL2-Doom repo (https://github.com/AlexOberhofer/sdl2-doom)
 
