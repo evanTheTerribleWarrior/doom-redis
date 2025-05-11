@@ -130,8 +130,8 @@ The script will load these variables both for the game code and the backend to r
 From the root directory run the script:
 
 ```
-chmod +x build/start.sh
-./build/start.sh
+cd build
+bash start.sh
 
 ```
 
