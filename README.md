@@ -28,7 +28,7 @@ Current Features
 
 -   Player Performance over time (Redis Timeseries)
 
--   WORK IN PROGRESS: Vector Search for various cases (e.g. notify player for optimal weapon in a certain region)
+-   Weapon Recommendation (Redis Vector Search)
 
 -   Data separation per Doom WAD and per Map
 
