@@ -3,9 +3,7 @@ DOOM Redis Edition
 
 Play Doom with a live Web UI showing real-time game stats, leaderboards, chat and in-game notifications for specific events like killing spree --- powered by Redis and WebSockets.
 
-![Image](https://general-8262.twil.io/output.gif)
-
-![Image2](https://github.com/user-attachments/assets/8c39c1fc-b4b9-4be4-b187-7f824ca6289e)
+![Image](https://github.com/user-attachments/assets/98f165dc-cf5a-4852-8757-2f7bc61101ae)
 
 ![Image3](https://github.com/user-attachments/assets/d84a7394-d423-455c-9c83-ddd04bb44ba3)
 
@@ -29,6 +27,8 @@ Current Features
 -   Player Performance over time (Redis Timeseries)
 
 -   Weapon Recommendation (Redis Vector Search)
+
+-   Achievement badges (Redis BitMap)
 
 -   Data separation per Doom WAD and per Map
 
