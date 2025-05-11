@@ -127,11 +127,11 @@ The script will load these variables both for the game code and the backend to r
 
 ###  **Run the project via single script**
 
-From the root directory run the script:
+From the root directory run the script for your OS, for example for macOS:
 
 ```
 cd build
-bash start.sh
+bash start-macos.sh
 
 ```
 
