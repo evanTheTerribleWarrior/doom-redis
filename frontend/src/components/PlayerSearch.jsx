@@ -4,7 +4,23 @@ import {
   CircularProgress, TextField, InputAdornment, Grid
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import { Tooltip, Chip } from '@mui/material';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import BoltIcon from '@mui/icons-material/Bolt';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DoomSlayerImg from '../assets/doomslayer.png';
+
+const badgeIconMap = {
+  kill_streak_5: <MilitaryTechIcon sx={{ color: '#ffcc00' }} />,
+  kill_streak_10: <WhatshotIcon sx={{ color: '#ff5722' }} />,
+  kill_streak_15: <BoltIcon sx={{ color: '#e91e63' }} />,
+  kill_streak_20: <EmojiEventsIcon sx={{ color: '#9c27b0' }} />,
+  kill_streak_30: <StarIcon sx={{ color: '#03a9f4' }} />,
+  kill_streak_50: <AutoAwesomeIcon sx={{ color: '#00e676' }} />
+};
 
 export default function PlayerSearch() {
   const [query, setQuery] = useState('');
@@ -93,6 +109,18 @@ export default function PlayerSearch() {
                       <Typography variant="body2" sx={{ color: '#f0f0f0' }}>Shots: <b>{shots}</b></Typography>
                       <Typography variant="body2" sx={{ color: '#f0f0f0' }}>Efficiency: <b>{efficiency}</b></Typography>
                       <Typography variant="body2" sx={{ color: '#f0f0f0' }}>Preferred Weapon: <b>{preferredWeapon}</b></Typography>
+                      {stats.achievements && stats.achievements.length > 0 && (
+                        <Box mt={2}>
+                          <Typography variant="body2" sx={{ color: '#f0f0f0', mb: 1 }}>Achievements:</Typography>
+                          <Box display="flex" flexWrap="wrap" gap={1}>
+                          {stats.achievements.map((badge, i) => (
+                            <Tooltip title={badge.description} key={i}>
+                              {badgeIconMap[badge.key] || <MilitaryTechIcon sx={{ color: '#999' }} />}
+                            </Tooltip>
+                          ))}
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
                   </CardContent>
                 </Card>

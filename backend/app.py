@@ -7,6 +7,8 @@ import redis
 import os
 from flask import request
 import time
+from achievements import KILL_STREAK_ACHIEVEMENTS, KILL_STREAK_BADGE_DEFINITIONS
+
 
 
 from dotenv import load_dotenv
@@ -202,6 +204,7 @@ def search_players():
 def player_stats(player_name):
     stats_key = f'doom:players:{player_name}:total-stats'
     weapon_key = f'doom:players:{player_name}:weapons'
+    achievement_key = f'doom:achievements:{player_name}'
 
     if not r.exists(stats_key):
         return jsonify({'error': 'Player not found'}), 404
@@ -217,13 +220,25 @@ def player_stats(player_name):
     if weapon_stats:
         preferred_weapon = max(weapon_stats.items(), key=lambda x: int(x[1]))[0].decode()
 
+    achievements = []
+    for streak, bit in KILL_STREAK_ACHIEVEMENTS.items():
+        if r.getbit(achievement_key, bit):
+            defn = KILL_STREAK_BADGE_DEFINITIONS.get(streak)
+            if defn:
+                achievements.append({
+                    "key": defn["key"],
+                    "description": defn["description"],
+                    "label": defn["label"]
+                })
+
     return jsonify({
         'player': player_name,
         'kills': kills,
         'shots': shots,
         'deaths': deaths,
         'efficiency': efficiency,
-        'preferredWeapon': preferred_weapon
+        'preferredWeapon': preferred_weapon,
+        'achievements': achievements 
     })
 
 # Provides the timeseries value for the player. The range can be changed

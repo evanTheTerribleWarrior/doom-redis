@@ -7,6 +7,8 @@ from redis.commands.search.field import TagField, VectorField, TextField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
+from achievements import KILL_STREAK_ACHIEVEMENTS, KILL_STREAK_BADGE_DEFINITIONS
+
 
 # General players key
 PLAYERS_KEY = 'doom:players'
@@ -44,35 +46,16 @@ def safe_decode(value):
 # For every incoming event we check if the player is on killing spree
 # to push later as in-game notification
 def check_kill_spree(player, streak):
-
-    status = None
-    apply_spree = False
-
     streak = int(streak)
+    bit = KILL_STREAK_ACHIEVEMENTS.get(streak)
+    label = KILL_STREAK_BADGE_DEFINITIONS.get(streak)['label']
 
-    if streak == 5:
-        status = "AWESOME"
-        apply_spree = True
-    elif streak == 10:
-        status = "DOMINATING"
-        apply_spree = True
-    elif streak == 15:
-        status = "UNSTOPPABLE"
-        apply_spree = True
-    elif streak == 20:
-        status = "LEGENDARY"
-        apply_spree = True
-    elif streak == 30:
-        status = "TRUE SLAYER"
-        apply_spree = True
-    elif streak == 50:
-        status = "GOD MODE"
-        apply_spree = True
-
-    if apply_spree:
-        return f"{player} {streak} kill spree: {status}"  
-    else:
-        return None  
+    if bit is not None:
+        return {
+            "bit": bit,
+            "message": f"{player} {streak} kill spree: {label}"
+        }
+    return None
     
 # Mapping for killing spree, used to search if players had sprees
 # in the area that player is currently in using similarity search
@@ -151,6 +134,7 @@ def start_event_consumer(r, socketio, enable_vectors):
                         target = safe_decode(data.get(b'targetName', b''))
                         wadId = safe_decode(data.get(b'wadId', b''))
 
+                        # We get the WAD filename to show it in the frontend
                         wad_filename = r.hget("doom:wads:wad-names", wadId)
                         if wad_filename:
                             wad_filename = wad_filename.decode()
@@ -166,7 +150,11 @@ def start_event_consumer(r, socketio, enable_vectors):
                             r.publish(BROADCAST_CHANNEL, f"{player} joined the game")
                             r.xack(EVENT_STREAM, EVENT_GROUP, event_id)
                             continue
-
+                        
+                        # If user enabled the ENABLE_VECTOR variable
+                        # We get their current position and create a query vector to check
+                        # if there are prior killing sprees nearby to send them weapon recommendation
+                        # We also check if we should send the notification as we don't want to send too frequently
                         if enable_vectors:
                             if type == 'movement': 
                                 posX = safe_decode(data.get(b'posX', b''))
@@ -200,6 +188,10 @@ def start_event_consumer(r, socketio, enable_vectors):
 
                             r.incrby(f'{PLAYERS_KEY}:{player}:streak', 1)
                             streak = r.get(f'{PLAYERS_KEY}:{player}:streak')
+
+                            # We check if the player has a kill spree and if so
+                            # we add their current coordinates and other details to a vector
+                            # to be used later in Vector Searches
                             kill_spree = check_kill_spree(player, streak)
                             if kill_spree is not None:
                                 posX = safe_decode(data.get(b'posX', b''))
@@ -208,7 +200,10 @@ def start_event_consumer(r, socketio, enable_vectors):
                                 spree_id = str(uuid.uuid4())
                                 key = f'doom:ai:vectors:sprees:{spree_id}'
                                 pipe.hset(key, mapping = vector_mapping)
-                                pipe.publish(BROADCAST_CHANNEL, kill_spree)
+
+                                # Update the kill spree achievement BITFIELD and publish notification
+                                pipe.setbit(f"doom:achievements:{player}", kill_spree["bit"], 1)
+                                pipe.publish(BROADCAST_CHANNEL, kill_spree["message"])
 
                             pipe.hincrby(player_total, 'totalKills', 1)
                             pipe.hincrby(wad_player, 'totalKills', 1)
