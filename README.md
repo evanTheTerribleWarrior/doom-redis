@@ -395,6 +395,71 @@ if match.player != player:
 ```
 We set NOTIFICATION_EXPIRY for the seconds that we want to wait until we expire the notification so that we don't overwhelm the player with notifications for every bit that they move
 
+### Reward System
+The game includes a custom reward system that can be expanded to any use case needed.
+
+As of today, the main rewards are related to Kill Sprees and the `achievements.py` file contains the setup
+```
+"REWARDS": {
+    5: {
+        "key": "boost:ammo:10",
+        "description": "Received +10 ammo"
+    },
+    10: {
+        "key": "boost:armor:20",
+        "description": "Received +20 armor"
+    }
+....
+```
+The above means "for 5 kill streak give 10 ammo" etc.
+
+Once the kill spree is identified the relevant reward key is sent to the C game code PubSub module
+```
+pipe.publish(f"doom:reward:{player}", kill_spree["reward"])
+```
+and then in the game code the relevant functions take over to implement it, for example:
+```
+void GetBoostDetails(const char *boost) {
+
+    if (strncmp(boost, "boost:ammo:", 11) == 0) {
+        int amount;
+        if (sscanf(boost, "boost:ammo:%d", &amount) == 1) {
+            GiveAmmoToPlayer(amount);
+        }
+    }
+    else if (strncmp(boost, "boost:armor:", 12) == 0) {
+        int amount;
+        if (sscanf(boost, "boost:armor:%d", &amount) == 1) {
+            GiveArmorToPlayer(amount);
+        }
+    }
+...
+```
+
+which leads to the subsequent boost function. For example to give extra ammo to the weapon the player currently holds:
+```
+void GiveAmmoToPlayer(int amount) {
+
+    player_t *player = &players[consoleplayer];
+    int weaponEnum = player->readyweapon;
+    const char* weapon = GetWeaponName(weaponEnum);
+
+    ammotype_t ammo = weapon_to_ammo(weapon);
+    if (ammo < 0 || ammo >= NUMAMMO) return;
+
+    player->ammo[ammo] += amount;
+
+    if (player->ammo[ammo] > player->maxammo[ammo]) {
+        player->ammo[ammo] = player->maxammo[ammo];
+    }
+
+    char pubsubmessage[64];
+    snprintf(pubsubmessage, sizeof(pubsubmessage), "[BOOST]: +%d ammo to %s", amount, weapon);
+
+    SetPubSubMessage(pubsubmessage);
+}
+```
+
 
 More implementation details will be added
 

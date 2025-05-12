@@ -405,7 +405,7 @@ void GiveArmorToPlayer(int amount)
         player->armorpoints = 200;
     }
     if (player->armortype < 1) {
-        player->armortype = 1;  // green by default
+        player->armortype = 1;
     }
 
     char pubsubmessage[64];
