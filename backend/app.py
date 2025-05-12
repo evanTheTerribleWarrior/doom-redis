@@ -7,7 +7,7 @@ import redis
 import os
 from flask import request
 import time
-from achievements import KILL_STREAK_ACHIEVEMENTS, KILL_STREAK_BADGE_DEFINITIONS
+from achievements import KILL_STREAK
 
 
 
@@ -221,9 +221,9 @@ def player_stats(player_name):
         preferred_weapon = max(weapon_stats.items(), key=lambda x: int(x[1]))[0].decode()
 
     achievements = []
-    for streak, bit in KILL_STREAK_ACHIEVEMENTS.items():
+    for streak, bit in KILL_STREAK["BITMAP"].items():
         if r.getbit(achievement_key, bit):
-            defn = KILL_STREAK_BADGE_DEFINITIONS.get(streak)
+            defn = KILL_STREAK["BADGE_DEF"].get(streak)
             if defn:
                 achievements.append({
                     "key": defn["key"],

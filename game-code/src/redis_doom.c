@@ -2,6 +2,11 @@
 #include "hu_stuff.h"
 #include "w_checksum.h"
 
+#define BOOST_KEY "boost:"
+
+extern player_t players[MAXPLAYERS];
+extern int consoleplayer;
+
 // Holds the generated hex ID for the WAD
 char doom_wad_id[41];
 
@@ -22,6 +27,8 @@ int redisNotificationLen = 0;
 hu_textline_t w_redisNotification;
 redisContext *pubSubContext;
 pthread_t pubSubThread;
+
+void SetPubSubMessage(const char* incomingMessage);
 
 // Helper function to print and free the reply object as needed
 void FreeRedisReply(redisReply *reply) {
@@ -238,6 +245,20 @@ const char* GetWeaponName(int weaponEnum)
     return weaponName;
 }
 
+weapontype_t GetWeaponEnumFromName(const char* name) {
+    if (strcmp(name, "fist") == 0) return wp_fist;
+    if (strcmp(name, "pistol") == 0) return wp_pistol;
+    if (strcmp(name, "shotgun") == 0) return wp_shotgun;
+    if (strcmp(name, "chaingun") == 0) return wp_chaingun;
+    if (strcmp(name, "rocket") == 0 || strcmp(name, "rocketlauncher") == 0) return wp_missile;
+    if (strcmp(name, "plasma") == 0) return wp_plasma;
+    if (strcmp(name, "bfg") == 0) return wp_bfg;
+    if (strcmp(name, "chainsaw") == 0) return wp_chainsaw;
+    if (strcmp(name, "supershotgun") == 0) return wp_supershotgun;
+    return -1;
+}
+
+
 
 void AddShotFiredToStream(redisContext *c, const char *playerName, int weaponEnum) 
 {
@@ -307,6 +328,113 @@ void SendPlayerMovement(redisContext *c, const char *playerName, int weaponEnum,
     FreeRedisReply(reply);
 }
 
+/*
+* Dealing with boosts
+**/
+
+ammotype_t weapon_to_ammo(const char* weapon) {
+    if (strcmp(weapon, "pistol") == 0 || strcmp(weapon, "chaingun") == 0) return am_clip;
+    if (strcmp(weapon, "shotgun") == 0 || strcmp(weapon, "supershotgun") == 0) return am_shell;
+    if (strcmp(weapon, "plasma") == 0) return am_cell;
+    if (strcmp(weapon, "rocket") == 0 || strcmp(weapon, "rocketlauncher") == 0) return am_misl;
+    return -1;
+}
+
+void GetBoostDetails(const char *boost) {
+
+    if (strncmp(boost, "boost:ammo:", 11) == 0) {
+        int amount;
+        if (sscanf(boost, "boost:ammo:%d", &amount) == 1) {
+            GiveAmmoToPlayer(amount);
+        }
+    }
+    else if (strncmp(boost, "boost:armor:", 12) == 0) {
+        int amount;
+        if (sscanf(boost, "boost:armor:%d", &amount) == 1) {
+            GiveArmorToPlayer(amount);
+        }
+    }
+    else if (strncmp(boost, "boost:weapon:", 13) == 0) {
+        char weaponName[32];
+        if (sscanf(boost, "boost:weapon:%31s", weaponName) == 1) {
+            GiveWeaponToPlayer(weaponName);
+        }
+    }
+    else if (strncmp(boost, "boost:godmode:", 14) == 0) {
+        int duration;
+        if (sscanf(boost, "boost:godmode:%d", &duration) == 1) {
+            GiveGodModeToPlayer(duration);
+        }
+    }
+}
+
+void GiveGodModeToPlayer(int duration)
+{
+    player_t *player = &players[consoleplayer];
+
+    player->cheats |= CF_GODMODE;
+    printf("[BOOST] CF_GODMODE set. Current cheats: 0x%X\n", player->cheats);
+    player->boostGodModeExpiry = gametic + (duration * TICRATE);
+
+    char pubsubmessage[64];
+    snprintf(pubsubmessage, sizeof(pubsubmessage), "[BOOST] Godmode enabled for %d sec", duration);
+    SetPubSubMessage(pubsubmessage);
+
+}
+
+void GiveWeaponToPlayer(const char *weaponName) 
+{
+    weapontype_t weaponEnum = GetWeaponEnumFromName(weaponName);
+    if (weaponEnum >= 0 && weaponEnum < NUMWEAPONS) {
+        player_t *player = &players[consoleplayer];
+        player->weaponowned[weaponEnum] = true;
+
+        char pubsubmessage[64];
+        snprintf(pubsubmessage, sizeof(pubsubmessage), "[BOOST] New weapon unlocked: %s", weaponName);
+        SetPubSubMessage(pubsubmessage);
+    }
+}
+
+void GiveArmorToPlayer(int amount)
+{
+
+    player_t *player = &players[consoleplayer];
+
+    player->armorpoints += amount;
+    if (player->armorpoints > 200) {
+        player->armorpoints = 200;
+    }
+    if (player->armortype < 1) {
+        player->armortype = 1;  // green by default
+    }
+
+    char pubsubmessage[64];
+    snprintf(pubsubmessage, sizeof(pubsubmessage), "[BOOST] +%d armor", amount);
+    SetPubSubMessage(pubsubmessage);
+}
+
+void GiveAmmoToPlayer(int amount) {
+
+    player_t *player = &players[consoleplayer];
+    int weaponEnum = player->readyweapon;
+    const char* weapon = GetWeaponName(weaponEnum);
+
+    ammotype_t ammo = weapon_to_ammo(weapon);
+    if (ammo < 0 || ammo >= NUMAMMO) return;
+
+    player->ammo[ammo] += amount;
+
+    if (player->ammo[ammo] > player->maxammo[ammo]) {
+        player->ammo[ammo] = player->maxammo[ammo];
+    }
+
+    char pubsubmessage[64];
+    snprintf(pubsubmessage, sizeof(pubsubmessage), "[BOOST]: +%d ammo to %s", amount, weapon);
+
+    SetPubSubMessage(pubsubmessage);
+}
+
+
 /* 
 *
 *   Functions for Pub/Sub model for in-game notifications
@@ -334,6 +462,9 @@ void* PubSubListenerThread(void *arg)
 
         reply = redisCommand(pubSubContext, "SUBSCRIBE doom:players:broadcast");
         FreeRedisReply(reply);
+
+        reply = redisCommand(pubSubContext, "SUBSCRIBE doom:reward:%s", playerName);
+        FreeRedisReply(reply);
     }
     else {
         printf("Could not subscribe to PubSub channel");
@@ -347,7 +478,13 @@ void* PubSubListenerThread(void *arg)
             if (reply && reply->type == REDIS_REPLY_ARRAY && reply->elements == 3) {
                 const char* incomingMessage = reply->element[2]->str;
                 if (incomingMessage) {
-                    SetPubSubMessage(incomingMessage);
+                    if (strncmp(incomingMessage, BOOST_KEY, strlen(BOOST_KEY)) == 0) {
+                        GetBoostDetails(incomingMessage);
+                    }
+                    else {
+                        SetPubSubMessage(incomingMessage);
+                    }
+                    
                 }
             }
             freeReplyObject(reply);
@@ -379,3 +516,4 @@ void StopPubSubListener()
 *   End of Functions for Pub/Sub model for in-game notifications
 *
  */
+

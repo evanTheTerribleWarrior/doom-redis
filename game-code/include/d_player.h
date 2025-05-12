@@ -160,6 +160,8 @@ typedef struct player_s
 
     char playerName[MAX_PLAYER_NAME];
 
+    int boostGodModeExpiry;
+
 } player_t;
 
 

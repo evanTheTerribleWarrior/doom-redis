@@ -236,6 +236,11 @@ void P_PlayerThink (player_t* player)
 	player->mo->flags |= MF_NOCLIP;
     else
 	player->mo->flags &= ~MF_NOCLIP;
+
+	// Redis addition for Godmode boost
+	if (player->cheats & CF_GODMODE && gametic >= player->boostGodModeExpiry) {
+    	player->cheats &= ~CF_GODMODE;
+	}
     
     // chain saw run forward
     cmd = &player->cmd;

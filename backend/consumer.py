@@ -7,7 +7,7 @@ from redis.commands.search.field import TagField, VectorField, TextField
 from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 
-from achievements import KILL_STREAK_ACHIEVEMENTS, KILL_STREAK_BADGE_DEFINITIONS
+from achievements import KILL_STREAK
 
 
 # General players key
@@ -47,13 +47,15 @@ def safe_decode(value):
 # to push later as in-game notification
 def check_kill_spree(player, streak):
     streak = int(streak)
-    bit = KILL_STREAK_ACHIEVEMENTS.get(streak)
-    label = KILL_STREAK_BADGE_DEFINITIONS.get(streak)['label']
+    bit = KILL_STREAK["BITMAP"].get(streak)
 
     if bit is not None:
+        label = KILL_STREAK["BADGE_DEF"].get(streak)["label"]
         return {
             "bit": bit,
-            "message": f"{player} {streak} kill spree: {label}"
+            "message": f"{player} {streak} kill spree: {label}",
+            "reward": f"{KILL_STREAK["REWARDS"].get(streak)["key"]}",
+            "log": f"{player} {streak} kill spree: {label}. {KILL_STREAK["REWARDS"].get(streak)["description"]}"
         }
     return None
     
@@ -204,6 +206,8 @@ def start_event_consumer(r, socketio, enable_vectors):
                                 # Update the kill spree achievement BITFIELD and publish notification
                                 pipe.setbit(f"doom:achievements:{player}", kill_spree["bit"], 1)
                                 pipe.publish(BROADCAST_CHANNEL, kill_spree["message"])
+                                pipe.publish(f"doom:reward:{player}", kill_spree["reward"])
+                                log_msg = f"[{wad_filename}]: {kill_spree["log"]}"
 
                             pipe.hincrby(player_total, 'totalKills', 1)
                             pipe.hincrby(wad_player, 'totalKills', 1)

@@ -1,3 +1,4 @@
+
 #ifndef REDIS_DOOM_H
 #define REDIS_DOOM_H
 
@@ -30,37 +31,38 @@ extern hu_textline_t w_redisNotification;
 extern volatile int redisNotificationCounter;
 
 
-// Helper function to check the redis reply
+// Redis non-event functions
 void FreeRedisReply(redisReply *reply);
-
-// Starts the redis connection
 int InitRedis(redisContext **c);
-
-// Closes the redis connection
 void CloseRedis(redisContext **c);
-
-// Add new player to Redis. We don't modify the name in the function
 void AddPlayerToRedis(redisContext *c, const char *playerName);
-
-// Check if player exists already in Redis
 long long PlayerExistsInRedis(redisContext *c, const char* playerName);
-
 void CheckPlayerPassword(redisContext *c, const char *playerName);
-
 void AnnouncePlayer(redisContext *c, const char *playerName);
-
-void CalculateWADHash(void);
-
 void SendWADHashToRedis(redisContext *c, const char *iwad_filename);
 
+// Helper functions
+void CalculateWADHash(void);
 void GetCurrentEpisodeMap(char* buffer, size_t size);
 const char* GetMobjTypeName(int mobjType);
 const char* GetWeaponName(int weaponEnum);
+weapontype_t GetWeaponEnumFromName(const char* name);
+
+// Events functions
 void AddShotFiredToStream(redisContext *c, const char *playerName, int weaponEnum);
 void AddKillToStream(redisContext *c, const char *playerName, int weaponEnum, int targetEnum, int playerX, int playerY);
 void AddPlayerDeathToStream(redisContext *c, const char *playerName, int killerEnum, int playerX, int playerY);
 void SendPlayerMovement(redisContext *c, const char* playerName, int weaponEnum, int posX, int posY);
 void AddChatEvent(redisContext *c, const char *playerName, const char *message);
+
+// Boost functions
+void GetBoostDetails(const char *boost);
+void GiveAmmoToPlayer(int amount);
+void GiveArmorToPlayer(int amount);
+void GiveWeaponToPlayer(const char *weaponName);
+void GiveGodModeToPlayer(int duration);
+
+// PubSub thread functions
 void* PubSubListenerThread(void *arg);
 void StartPubSubListener(const char* playerName);
 void StopPubSubListener();
