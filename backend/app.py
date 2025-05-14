@@ -205,6 +205,7 @@ def player_stats(player_name):
     stats_key = f'doom:players:{player_name}:total-stats'
     weapon_key = f'doom:players:{player_name}:weapons'
     achievement_key = f'doom:achievements:{player_name}'
+    online_key = f'doom:online:{player_name}'
 
     if not r.exists(stats_key):
         return jsonify({'error': 'Player not found'}), 404
@@ -231,6 +232,8 @@ def player_stats(player_name):
                     "label": defn["label"]
                 })
 
+    online = r.exists(online_key) == 1
+
     return jsonify({
         'player': player_name,
         'kills': kills,
@@ -238,7 +241,8 @@ def player_stats(player_name):
         'deaths': deaths,
         'efficiency': efficiency,
         'preferredWeapon': preferred_weapon,
-        'achievements': achievements 
+        'achievements': achievements,
+        'online': online
     })
 
 # Provides the timeseries value for the player. The range can be changed

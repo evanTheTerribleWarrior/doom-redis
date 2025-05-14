@@ -1,6 +1,7 @@
 #include "redis_doom.h"
 #include "hu_stuff.h"
 #include "w_checksum.h"
+#include <signal.h>
 
 #define BOOST_KEY "boost:"
 
@@ -29,6 +30,22 @@ redisContext *pubSubContext;
 pthread_t pubSubThread;
 
 void SetPubSubMessage(const char* incomingMessage);
+
+// Upon receiving specific Signals, terminate PubSub thread and close redis connection
+void HandleExitSignal(int sig) {
+    printf("\n[Signal] Received signal %d. Cleaning up Redis keys...\n", sig);
+
+    if (mainContext) {
+        redisReply *reply = redisCommand(mainContext, "DEL doom:online:%s", players[consoleplayer].playerName);
+        FreeRedisReply(reply);
+        printf("[Signal] Removed doom:online:%s\n", players[consoleplayer].playerName);
+    }
+
+    StopPubSubListener();
+    CloseRedis(&mainContext);
+    fflush(stdout);
+    fflush(stderr);
+}
 
 // Helper function to print and free the reply object as needed
 void FreeRedisReply(redisReply *reply) {
@@ -167,6 +184,21 @@ long long PlayerExistsInRedis(redisContext *c, const char* playerName)
 
     return exists;
 }
+
+// Refreshes the Online status of the player
+// It's used in P_Ticker so that we don't do another thread/infinite loop for it
+void RefreshOnlineStatus(const char* playerName, int force) {
+    static int last_gametic = 0;
+    const int interval = 30 * TICRATE;
+
+    if (force || (gametic - last_gametic >= interval)) {
+        redisReply *reply = redisCommand(mainContext, "SET doom:online:%s 1 EX 60", playerName);
+        FreeRedisReply(reply);
+        last_gametic = gametic;
+        printf("[Heartbeat] Refreshed online status for %s\n", playerName);
+    }
+}
+
 
 // Uses the Doom function W_Checksum that provides the sha1 digest
 // for the WAD data. Then we calculate a hex ID to use to uniquely identify
@@ -503,6 +535,7 @@ void StartPubSubListener(const char* playerName)
 
 void StopPubSubListener() 
 {
+    //printf("Stopping listener\n");
     redisNotificationThreadRunning = false;
     if (pubSubContext) {
         redisFree(pubSubContext);

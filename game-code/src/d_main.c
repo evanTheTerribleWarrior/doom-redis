@@ -1842,7 +1842,6 @@ void D_DoomMain (void)
 	p = M_CheckParm("-playername");
 	const char* chosenName = (p && p < myargc-1) ? myargv[p+1] : "anonymous";
 	snprintf(players[consoleplayer].playerName, MAX_PLAYER_NAME, "%s", chosenName);
-
 	InitRedis(&mainContext);
 	StartPubSubListener(players[consoleplayer].playerName);
 
@@ -1873,10 +1872,13 @@ void D_DoomMain (void)
     
     SendWADHashToRedis(mainContext, iwad_filename);
     AnnouncePlayer(mainContext, players[consoleplayer].playerName);
+    RefreshOnlineStatus(players[consoleplayer].playerName, 1);
+
+    signal(SIGINT, HandleExitSignal);
+    signal(SIGTERM, HandleExitSignal);
+    signal(SIGHUP, HandleExitSignal);
+    signal(SIGQUIT, HandleExitSignal);
 
     D_DoomLoop ();  // never returns
-
-	CloseRedis(&mainContext);
-	StopPubSubListener();
 }
 

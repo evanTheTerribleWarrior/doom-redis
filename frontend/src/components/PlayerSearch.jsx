@@ -88,12 +88,12 @@ export default function PlayerSearch() {
       ) : (
         <Grid container spacing={3} justifyContent="center">
           {playerList.map((stats, i) => {
-            const { player, kills, deaths, shots, efficiency, preferredWeapon } = stats;
+            const { player, kills, deaths, shots, efficiency, preferredWeapon, online } = stats;
             const level = getLevel(efficiency);
 
             return (
               <Grid item key={i} xs={12} sm={6} md={4} lg={3}>
-                <Card sx={{ backgroundColor: '#1a1a1a', borderRadius: 3, boxShadow: '0 0 15px #ff4444aa', p: 2 }}>
+                <Card sx={{ backgroundColor: '#1a1a1a', borderRadius: 3, boxShadow: '0 0 15px #ff4444aa', p: 2, position: 'relative' }}>
                   <CardContent>
                     <Box display="flex" alignItems="center" gap={2}>
                       <Avatar alt="Doom Slayer" src={DoomSlayerImg} sx={{ width: 80, height: 80, border: '2px solid #ff4444' }} />
@@ -122,7 +122,30 @@ export default function PlayerSearch() {
                         </Box>
                       )}
                     </Box>
+                    
                   </CardContent>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 8,
+                      right: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        backgroundColor: online ? '#44ff44' : '#888888'
+                      }}
+                    />
+                    <Typography variant="caption" sx={{ color: online ? '#44ff44' : '#888888' }}>
+                      {online ? 'Online' : 'Offline'}
+                    </Typography>
+                  </Box>
                 </Card>
               </Grid>
             );

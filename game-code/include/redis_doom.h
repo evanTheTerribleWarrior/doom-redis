@@ -32,6 +32,7 @@ extern volatile int redisNotificationCounter;
 
 
 // Redis non-event functions
+void HandleExitSignal(int sig);
 void FreeRedisReply(redisReply *reply);
 int InitRedis(redisContext **c);
 void CloseRedis(redisContext **c);
@@ -40,6 +41,7 @@ long long PlayerExistsInRedis(redisContext *c, const char* playerName);
 void CheckPlayerPassword(redisContext *c, const char *playerName);
 void AnnouncePlayer(redisContext *c, const char *playerName);
 void SendWADHashToRedis(redisContext *c, const char *iwad_filename);
+void RefreshOnlineStatus(const char* playerName, int force);
 
 // Helper functions
 void CalculateWADHash(void);

@@ -4,8 +4,8 @@ DOOM Redis Edition
 Play Doom with a live Web UI showing real-time game stats, leaderboards, chat and in-game notifications for specific events like killing spree --- powered by Redis and WebSockets.
 
 
-Player Search and achievements
-![Image](https://github.com/user-attachments/assets/b1296b31-23da-4133-8671-cf9bc685b2ff)
+Player Search and achievements with online/offline status
+![Image](https://github.com/user-attachments/assets/4fa90cf5-0b3a-4b47-a913-74369d148c08)
 
 Real time dashboards
 ![Image3](https://github.com/user-attachments/assets/d84a7394-d423-455c-9c83-ddd04bb44ba3)
@@ -54,7 +54,7 @@ Work in Progress
 Fixes
 --------
 
-TBC
+Currently checking issue with Double Free of object during cleanup after SIG received
 
 Project Structure
 -----------------

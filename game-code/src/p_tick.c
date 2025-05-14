@@ -22,7 +22,7 @@
 #include "p_local.h"
 
 #include "doomstat.h"
-
+#include "redis_doom.h"
 
 int	leveltime;
 
@@ -145,6 +145,7 @@ void P_Ticker (void)
     P_RunThinkers ();
     P_UpdateSpecials ();
     P_RespawnSpecials ();
+    RefreshOnlineStatus(players[consoleplayer].playerName, 0);
 
     // for par times
     leveltime++;	
