@@ -26,26 +26,10 @@ boolean redisNotificationThreadRunning = false;
 char redisNotificationBuffer[128];
 int redisNotificationLen = 0;
 hu_textline_t w_redisNotification;
-redisContext *pubSubContext;
-pthread_t pubSubThread;
+redisContext *pubSubContext = NULL;
+pthread_t pubSubThread = 0;
 
 void SetPubSubMessage(const char* incomingMessage);
-
-// Upon receiving specific Signals, terminate PubSub thread and close redis connection
-void HandleExitSignal(int sig) {
-    printf("\n[Signal] Received signal %d. Cleaning up Redis keys...\n", sig);
-
-    if (mainContext) {
-        redisReply *reply = redisCommand(mainContext, "DEL doom:online:%s", players[consoleplayer].playerName);
-        FreeRedisReply(reply);
-        printf("[Signal] Removed doom:online:%s\n", players[consoleplayer].playerName);
-    }
-
-    StopPubSubListener();
-    CloseRedis(&mainContext);
-    fflush(stdout);
-    fflush(stderr);
-}
 
 // Helper function to print and free the reply object as needed
 void FreeRedisReply(redisReply *reply) {
@@ -59,6 +43,29 @@ void FreeRedisReply(redisReply *reply) {
     }
 
     freeReplyObject(reply);
+}
+
+// Upon receiving specific Signals, terminate PubSub thread and close redis connection
+void HandleExitSignal(int sig) {
+    printf("\n[Signal] Received signal %d. Cleaning up Redis keys...\n", sig);
+
+    if (mainContext) {
+        redisReply *reply = redisCommand(mainContext, "DEL doom:online:%s", players[consoleplayer].playerName);
+        FreeRedisReply(reply);
+        printf("[Signal] Removed doom:online:%s\n", players[consoleplayer].playerName);
+    }
+
+    printf("[Signal] Stopping PubSub listener...\n");
+    StopPubSubListener();
+    printf("[Signal] PubSub listener stopped.\n");
+
+    printf("[Signal] Closing Redis...\n");
+    CloseRedis(&mainContext);
+    printf("[Signal] Redis closed.\n");
+
+    fflush(stdout);
+    fflush(stderr);
+    exit(0);
 }
 
 
@@ -104,6 +111,7 @@ int InitRedis(redisContext **c)
 void CloseRedis(redisContext **c)
 {
     if (*c) {
+        printf("[Redis] About to free context at %p\n", *c);
         redisFree(*c);
         *c = NULL;
     }
@@ -524,6 +532,7 @@ void* PubSubListenerThread(void *arg)
     }
 
     redisFree(pubSubContext);
+    pubSubContext = NULL;
     return NULL;
 
 }
@@ -535,13 +544,9 @@ void StartPubSubListener(const char* playerName)
 
 void StopPubSubListener() 
 {
-    //printf("Stopping listener\n");
     redisNotificationThreadRunning = false;
-    if (pubSubContext) {
-        redisFree(pubSubContext);
-        pubSubContext = NULL;
-    }
     pthread_cancel(pubSubThread);
+    pubSubThread = 0;
 }
 
 /* 
