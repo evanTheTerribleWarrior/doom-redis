@@ -34,12 +34,12 @@ void SetPubSubMessage(const char* incomingMessage);
 // Helper function to print and free the reply object as needed
 void FreeRedisReply(redisReply *reply) {
     if (!reply) {
-        printf("[Redis Error]: NULL reply received.\n");
+        printf("[Redis] NULL reply received.\n");
         return;
     }
 
     if (reply->type == REDIS_REPLY_ERROR) {
-        printf("[Redis Error]: %s\n", reply->str);
+        printf("[Redis Error] %s\n", reply->str);
     }
 
     freeReplyObject(reply);
@@ -84,10 +84,10 @@ int InitRedis(redisContext **c)
     *c = redisConnect(host, port_int);
     if (*c == NULL || (*c)->err) {
         if (*c) {
-            printf("Redis connection error: %s\n", (*c)->errstr);
+            printf("[Redis Error] Redis connection error: %s\n", (*c)->errstr);
             redisFree(*c);
         } else {
-            printf("Can't allocate redis context\n");
+            printf("[Redis Error] Can't allocate redis context\n");
         }
         return -1;
     }
@@ -95,14 +95,14 @@ int InitRedis(redisContext **c)
     if (password && strlen(password) > 0) {
         redisReply *reply = redisCommand(*c, "AUTH %s", password);
         if (reply == NULL) {
-            printf("Redis AUTH failed\n");
+            printf("[Redis Error] Redis AUTH failed\n");
             redisFree(*c);
             return -1;
         }
         freeReplyObject(reply);
     }
 
-    printf("Connected to Redis at %s:%d\n", host, port_int);
+    printf("[Redis] Connected to Redis at %s:%d\n", host, port_int);
     return 0;
 }
 
@@ -115,7 +115,7 @@ void CloseRedis(redisContext **c)
         redisFree(*c);
         *c = NULL;
     }
-    printf("[Redis]: Closed Redis Connection\n");
+    printf("[Redis] Closed Redis Connection\n");
 }
 
 // Player should be unique per Redis DB
@@ -507,7 +507,7 @@ void* PubSubListenerThread(void *arg)
         FreeRedisReply(reply);
     }
     else {
-        printf("Could not subscribe to PubSub channel");
+        printf("[Redis Error] Could not subscribe to PubSub channel");
         return NULL;
     }
 

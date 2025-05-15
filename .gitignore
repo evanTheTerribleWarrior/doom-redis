@@ -17,6 +17,7 @@ README-SDL.txt
 *.zip
 cmake-*/
 game-code/build/
+game-code/build/DOOM.WAD
 
 # Python
 backend/__pycache__/

@@ -53,8 +53,7 @@ Work in Progress
 
 Fixes
 --------
-
-Currently checking issue with Double Free of object during cleanup after SIG received
+TBC
 
 Project Structure
 -----------------
