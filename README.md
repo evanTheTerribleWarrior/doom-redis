@@ -38,7 +38,7 @@ Current Features
 
 -   Achievement badges (Redis BitMap)
 
--   Reward System. Get extra ammo, guns or go to GODMODE for a 50 kill streak!
+-   Reward System. Get extra ammo, guns or go to GODMODE!
 
 -   Data separation per Doom WAD and per Map
 
