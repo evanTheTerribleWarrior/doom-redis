@@ -64,12 +64,12 @@ KILL_STREAK = {
         "description": "Received +40 armor"
     },
     kill_streak_4: {
-        "key": "boost:weapon:chaingun",
-        "description": "Unlocked Chaingun"
+        "key": "boost:godmode:30",
+        "description": "Godmode activated for 30 seconds"
     },
     kill_streak_5: {
-        "key": "boost:godmode:10",
-        "description": "Godmode activated for 10 seconds"
+        "key": "boost:weapon:chaingun",
+        "description": "Unlocked Chaingun"
     }
 }
 
