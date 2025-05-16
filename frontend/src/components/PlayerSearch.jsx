@@ -14,12 +14,12 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DoomSlayerImg from '../assets/doomslayer.png';
 
 const badgeIconMap = {
-  kill_streak_5: <MilitaryTechIcon sx={{ color: '#ffcc00' }} />,
-  kill_streak_10: <WhatshotIcon sx={{ color: '#ff5722' }} />,
-  kill_streak_15: <BoltIcon sx={{ color: '#e91e63' }} />,
-  kill_streak_20: <EmojiEventsIcon sx={{ color: '#9c27b0' }} />,
-  kill_streak_30: <StarIcon sx={{ color: '#03a9f4' }} />,
-  kill_streak_50: <AutoAwesomeIcon sx={{ color: '#00e676' }} />
+  kill_streak_0: <MilitaryTechIcon sx={{ color: '#ffcc00' }} />,
+  kill_streak_1: <WhatshotIcon sx={{ color: '#ff5722' }} />,
+  kill_streak_2: <BoltIcon sx={{ color: '#e91e63' }} />,
+  kill_streak_3: <EmojiEventsIcon sx={{ color: '#9c27b0' }} />,
+  kill_streak_4: <StarIcon sx={{ color: '#03a9f4' }} />,
+  kill_streak_5: <AutoAwesomeIcon sx={{ color: '#00e676' }} />
 };
 
 export default function PlayerSearch() {
