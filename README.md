@@ -225,7 +225,7 @@ You can also export `PLAYER_NAME` or set it as parameter in the command line as 
 ```
 cd game-code/build
 
-# Replace DOOM.WAD with your WAD filename if different, and optionally add -playerName
+# Replace the WAD with your WAD filename if different, and optionally add -playerName
 # if not already set in .env
 ./redis-doom -iwad ../WADs/freedoom1.wad -playerName DoomSlayer
 ```
@@ -233,7 +233,7 @@ cd game-code/build
 Project Architecture
 --------------------
 
-If you want to look into the implementation details, check for the files:
+If you want to look into the implementation details, check the files:
 ```
 game-code/include/redis-doom.h
 game-code/src/redis-doom.c
@@ -242,7 +242,7 @@ game-code/src/redis-doom.c
 
 |                          Doom Game (C)                    |
 
-|                  (hiredis → Redis Streams)                 |
+|                            (hiredis)                      |
 
 +-----------------------------------------------------------+
 
@@ -250,9 +250,9 @@ game-code/src/redis-doom.c
 
 +-----------------------------------------------------------+
 
-|                Redis Server (localhost:6379)              |
+|                         Redis Server                      |
 
-|            doom:events            doom:chat               |
+|               doom:events            doom:chat            |
 
 +-----------------------------------------------------------+
 
@@ -272,7 +272,7 @@ game-code/src/redis-doom.c
 
 |             React + Material UI Frontend (port 3000)      |
 
-|        Live Chat | Game Logs | Player Leaderboard         |
+|        Live Chat | Game Logs | Player Leaderboard | etc   |
 
 +-----------------------------------------------------------+
 

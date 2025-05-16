@@ -47,30 +47,30 @@ KILL_STREAK = {
         }
     },
     "REWARDS": {
-    kill_streak_0: {
-        "key": "boost:ammo:10",
-        "description": "Received +10 ammo"
-    },
-    kill_streak_1: {
-        "key": "boost:armor:20",
-        "description": "Received +20 armor"
-    },
-    kill_streak_2: {
-        "key": "boost:ammo:20",
-        "description": "Received +20 ammo"
-    },
-    kill_streak_3: {
-        "key": "boost:armor:40",
-        "description": "Received +40 armor"
-    },
-    kill_streak_4: {
-        "key": "boost:godmode:30",
-        "description": "Godmode activated for 30 seconds"
-    },
-    kill_streak_5: {
-        "key": "boost:weapon:chaingun",
-        "description": "Unlocked Chaingun"
+        kill_streak_0: {
+            "key": "boost:ammo:10",
+            "description": "Received +10 ammo"
+        },
+        kill_streak_1: {
+            "key": "boost:armor:20",
+            "description": "Received +20 armor"
+        },
+        kill_streak_2: {
+            "key": "boost:ammo:20",
+            "description": "Received +20 ammo"
+        },
+        kill_streak_3: {
+            "key": "boost:armor:40",
+            "description": "Received +40 armor"
+        },
+        kill_streak_4: {
+            "key": "boost:godmode:30",
+            "description": "Godmode activated for 30 seconds"
+        },
+        kill_streak_5: {
+            "key": "boost:weapon:chaingun",
+            "description": "Unlocked Chaingun"
+        }
     }
-}
 
 }

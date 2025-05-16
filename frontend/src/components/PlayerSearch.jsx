@@ -4,7 +4,7 @@ import {
   CircularProgress, TextField, InputAdornment, Grid
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Tooltip, Chip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import BoltIcon from '@mui/icons-material/Bolt';
