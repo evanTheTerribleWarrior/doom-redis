@@ -494,4 +494,4 @@ This repo is just for fun and to play around with friends.
 It does not take into account things like session management and other mechanisms
 that might matter in online games that share stats.
 
-Anyway, happy playing and feel free to suggest additions that will make it more fun!
+Anyway, happy playing and feel free to suggest additions that will make it more fun!!
